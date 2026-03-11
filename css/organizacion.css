@@ -1,0 +1,195 @@
+/* ==================================================
+   1️⃣ RESET Y VARIABLES
+================================================== */
+
+:root {
+    --color-primario: #1f3c88;
+    --color-secundario: #2e5aac;
+    --color-fondo: #f4f6f9;
+    --color-blanco: #ffffff;
+    --color-texto: #333;
+
+    --gerente: #1f3c88;
+    --admin: #2e5aac;
+    --empleado: #4a90e2;
+
+    --sombra: 0 4px 12px rgba(0,0,0,0.08);
+    --radio: 12px;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    background: var(--color-fondo);
+}
+
+
+/* ==================================================
+   2️⃣ HEADER
+================================================== */
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 40px;
+    background: var(--color-primario);
+    color: var(--color-blanco);
+}
+
+.logo {
+    font-weight: bold;
+    font-size: 1.3rem;
+}
+
+.back-btn {
+    color: var(--color-blanco);
+    text-decoration: none;
+}
+
+
+/* ==================================================
+   3️⃣ HERO
+================================================== */
+
+.hero {
+    text-align: center;
+    padding: 40px 20px;
+    background: linear-gradient(to right, var(--color-primario), var(--color-secundario));
+    color: white;
+}
+
+
+/* ==================================================
+   4️⃣ ORGANIGRAMA PIRAMIDAL
+================================================== */
+
+.organization {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 40px 20px;
+    padding: 60px 20px;
+    justify-items: center;
+}
+
+
+/* ==================================================
+   5️⃣ TARJETAS (TAMAÑO REDUCIDO)
+================================================== */
+
+.card {
+    background: var(--color-blanco);
+    width: 200px; /* 🔥 MÁS PEQUEÑAS */
+    padding: 18px;
+    border-radius: var(--radio);
+    box-shadow: var(--sombra);
+    text-align: center;
+    transition: 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.card img {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    margin-bottom: 10px;
+}
+
+.card h3 {
+    font-size: 0.95rem;
+}
+
+.card p {
+    font-size: 0.85rem;
+    font-weight: bold;
+}
+
+.card span {
+    font-size: 0.75rem;
+    opacity: 0.7;
+}
+
+
+/* ==================================================
+   6️⃣ DISTRIBUCIÓN PIRAMIDAL REAL
+================================================== */
+
+/* Nivel 1 (Gerente General) */
+.organization .card:nth-child(1) {
+    grid-column: 2 / span 2;
+}
+
+/* Nivel 2 (2 gerentes) */
+.organization .card:nth-child(2) {
+    grid-column: 1 / span 2;
+}
+
+.organization .card:nth-child(3) {
+    grid-column: 3 / span 2;
+}
+
+/* Nivel 3 (2 administrativos) */
+.organization .card:nth-child(4) {
+    grid-column: 2;
+}
+
+.organization .card:nth-child(5) {
+    grid-column: 3;
+}
+
+/* Nivel 4 (4 empleados) */
+.organization .card:nth-child(6) {
+    grid-column: 1;
+}
+
+.organization .card:nth-child(7) {
+    grid-column: 2;
+}
+
+.organization .card:nth-child(8) {
+    grid-column: 3;
+}
+
+.organization .card:nth-child(9) {
+    grid-column: 4;
+}
+
+
+/* ==================================================
+   7️⃣ COLORES POR JERARQUÍA
+================================================== */
+
+.gerente {
+    border-top: 5px solid var(--gerente);
+}
+
+.admin {
+    border-top: 5px solid var(--admin);
+}
+
+.empleado {
+    border-top: 5px solid var(--empleado);
+}
+
+
+/* ==================================================
+   8️⃣ RESPONSIVE
+================================================== */
+
+@media (max-width: 900px) {
+    .organization {
+        grid-template-columns: 1fr;
+    }
+
+    .organization .card {
+        grid-column: auto !important;
+    }
+}
