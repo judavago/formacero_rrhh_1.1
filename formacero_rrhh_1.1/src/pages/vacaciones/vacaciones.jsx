@@ -1,18 +1,42 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import "./vacaciones.css";
 
 function Vacaciones() {
 
-  const empleados = [
-    { nombre:"Juan Pérez", ingreso:"2022-01-10", usados:5 },
-    { nombre:"María Gómez", ingreso:"2021-06-15", usados:10 },
-    { nombre:"Carlos López", ingreso:"2023-03-01", usados:2 }
-  ];
-
+  const [empleados,setEmpleados] = useState([]);
   const [empleadoSeleccionado,setEmpleadoSeleccionado] = useState(null);
   const [diasSolicitados,setDiasSolicitados] = useState("");
   const [resultado,setResultado] = useState("");
+
+  // 🔐 TRAER EMPLEADOS DESDE BACKEND
+  useEffect(() => {
+    async function cargarEmpleados(){
+      try {
+
+        const token = localStorage.getItem("token");
+
+        const res = await fetch("http://localhost:3001/api/empleados", {
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        });
+
+        const data = await res.json();
+
+        if(!res.ok){
+          throw new Error(data.message || "Error al cargar empleados");
+        }
+
+        setEmpleados(data);
+
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    cargarEmpleados();
+  }, []);
 
   function seleccionarEmpleado(nombre){
     const emp = empleados.find(e => e.nombre === nombre);
@@ -20,7 +44,7 @@ function Vacaciones() {
     setResultado("");
   }
 
-  function calcularVacaciones(){
+  async function calcularVacaciones(){
 
     if(!empleadoSeleccionado){
       setResultado("Seleccione un empleado primero");
@@ -34,12 +58,40 @@ function Vacaciones() {
 
     const diasTotales = años * 15;
 
-    const disponibles = diasTotales - empleadoSeleccionado.usados;
+    const disponibles = diasTotales - (empleadoSeleccionado.usados || 0);
 
-    if(diasSolicitados <= disponibles){
-      setResultado("Solicitud enviada correctamente");
-    } else {
-      setResultado("No tiene suficientes días disponibles");
+    // 🔐 ENVÍO AL BACKEND
+    try {
+
+      const token = localStorage.getItem("token");
+
+      const res = await fetch("http://localhost:3001/api/vacaciones", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          empleado: empleadoSeleccionado.nombre,
+          diasSolicitados
+        })
+      });
+
+      const data = await res.json();
+
+      if(!res.ok){
+        throw new Error(data.message || "Error al solicitar vacaciones");
+      }
+
+      if(diasSolicitados <= disponibles){
+        setResultado("✅ Solicitud enviada correctamente");
+      } else {
+        setResultado("❌ No tiene suficientes días disponibles");
+      }
+
+    } catch (error) {
+      console.error(error);
+      setResultado("❌ Error al conectar con el servidor");
     }
 
   }
@@ -52,10 +104,10 @@ function Vacaciones() {
       <header className="header">
         <div className="logo">Formacero</div>
         <div className="search-bar">
-        <input
-        type="text"
-        placeholder="Buscar empleados, cargos o documentos..."
-        />
+          <input
+            type="text"
+            placeholder="Buscar empleados, cargos o documentos..."
+          />
         </div>
         <Link to="/dashboard" className="back-btn">← Volver al Panel</Link>
       </header>
@@ -65,7 +117,6 @@ function Vacaciones() {
         <h1>Gestión de Vacaciones</h1>
         <p>Seleccione un empleado y gestione sus días de vacaciones</p>
       </section>
-
 
       {/* SECCIÓN VACACIONES */}
       <section className="seccion-vacaciones">
@@ -86,7 +137,6 @@ function Vacaciones() {
 
           </select>
 
-
           {empleadoSeleccionado && (
 
             <div className="info-box">
@@ -96,13 +146,12 @@ function Vacaciones() {
               </p>
 
               <p>
-                <strong>Días usados:</strong> {empleadoSeleccionado.usados}
+                <strong>Días usados:</strong> {empleadoSeleccionado.usados || 0}
               </p>
 
             </div>
 
           )}
-
 
           <label>Días a solicitar:</label>
 
@@ -113,11 +162,9 @@ function Vacaciones() {
             onChange={(e)=>setDiasSolicitados(e.target.value)}
           />
 
-
           <button onClick={calcularVacaciones}>
             Solicitar Vacaciones
           </button>
-
 
           <div className="resultado">
             {resultado}
@@ -126,7 +173,6 @@ function Vacaciones() {
         </div>
 
       </section>
-
 
       {/* FOOTER */}
       <footer className="footer">

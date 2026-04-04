@@ -9,27 +9,50 @@ import {
   getExEmpleados,
   deleteExEmpleado,
   getCumpleaneros,
-  getEmpleadoById // 🔹 agregamos la función para detalle por ID
+  getEmpleadoById,
+  getCertificadoEmpleado
 } from "../controllers/empleados.controller.js";
+
+// 🔥 NUEVO IMPORT
+import { verifyToken } from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
 
-// 🔹 BUSQUEDAS
-router.get("/search", searchEmpleado);           // 🔥 PRIMERO
-router.get("/count", countEmpleados);
-router.get("/cumpleaneros", getCumpleaneros);
-router.get("/exempleados", getExEmpleados);
 
-// 🔹 CRUD GENERAL
-router.get("/", getEmpleados);
-router.post("/", createEmpleado);
-router.put("/:id", updateEmpleado);
-router.delete("/:id", deleteEmpleado);
+// 🔹 =============================
+// 🔍 BUSQUEDAS Y CONSULTAS
+// =============================
+router.get("/search", verifyToken, searchEmpleado);           
+router.get("/count", verifyToken, countEmpleados);
+router.get("/cumpleaneros", verifyToken, getCumpleaneros);
+router.get("/exempleados", verifyToken, getExEmpleados);
 
-// 🔹 DELETE EX-EMPLEADO
-router.delete("/exempleados/:id", deleteExEmpleado);
 
-// 🔹 OBTENER EMPLEADO POR ID (SIEMPRE AL FINAL)
-router.get("/:id", getEmpleadoById);             // 🔥 DINÁMICA, SIEMPRE AL FINAL
+// 🔹 =============================
+// 📄 CERTIFICADOS (ANTES DE :id)
+// =============================
+router.get("/certificado/:id", verifyToken, getCertificadoEmpleado);
+
+
+// 🔹 =============================
+// 🧾 CRUD GENERAL
+// =============================
+router.get("/", verifyToken, getEmpleados);
+router.post("/", verifyToken, createEmpleado);
+router.put("/:id", verifyToken, updateEmpleado);
+router.delete("/:id", verifyToken, deleteEmpleado);
+
+
+// 🔹 =============================
+// 🗑 EX-EMPLEADOS
+// =============================
+router.delete("/exempleados/:id", verifyToken, deleteExEmpleado);
+
+
+// 🔹 =============================
+// 👤 DETALLE POR ID (SIEMPRE AL FINAL)
+// =============================
+router.get("/:id", verifyToken, getEmpleadoById);
+
 
 export default router;

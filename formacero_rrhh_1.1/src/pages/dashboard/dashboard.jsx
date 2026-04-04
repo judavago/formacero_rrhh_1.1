@@ -1,18 +1,33 @@
-import React, { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom"; // 🔹 agregamos useNavigate
+import React, { useEffect, useState } from "react"; 
+import { Link, useNavigate } from "react-router-dom";
 import "../../layout.css";
 import "./dashboard.css";
 
+const API = "http://localhost:3001/api";
+
 function Dashboard() {
 
-  const navigate = useNavigate(); // 🔹 hook para navegar
+  const navigate = useNavigate();
   const [totalEmpleados, setTotalEmpleados] = useState(0);
-  const [cumpleaneros, setCumpleaneros] = useState([]); 
+  const [cumpleaneros, setCumpleaneros] = useState([]);
   const [search, setSearch] = useState("");
   const [results, setResults] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
 
-  // 🔹 Función en tiempo real para el buscador
+  // ✅ TOKEN
+  const token = localStorage.getItem("token");
+
+  // 👤 USUARIO
+  const user = JSON.parse(localStorage.getItem("user"));
+
+  // 🔒 LOGOUT
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    navigate("/login");
+  };
+
+  // 🔍 BUSCADOR
   const handleSearchChange = async (e) => {
     const value = e.target.value;
     setSearch(value);
@@ -23,42 +38,86 @@ function Dashboard() {
     }
 
     try {
-      const res = await fetch(`http://localhost:3001/empleados/search?q=${value}`);
+      const res = await fetch(`${API}/empleados/search?q=${value}`, {
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
+
       const data = await res.json();
+
+      if (!res.ok || !Array.isArray(data)) {
+        setResults([]);
+        return;
+      }
 
       setResults(data);
       setShowDropdown(true);
 
     } catch (error) {
       console.error("Error buscando:", error);
+      setResults([]);
     }
   };
 
-  // 🔹 Obtener total de empleados y cumpleaños
+  // 📊 DATA
   useEffect(() => {
+
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+
     const getTotal = async () => {
       try {
-        const res = await fetch("http://localhost:3001/empleados/count");
+        const res = await fetch(`${API}/empleados/count`, {
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        });
+
         const data = await res.json();
-        setTotalEmpleados(data.total);
+
+        if (!res.ok) {
+          setTotalEmpleados(0);
+          return;
+        }
+
+        setTotalEmpleados(data.total || 0);
+
       } catch (error) {
-        console.error("Error obteniendo total de empleados:", error);
+        console.error("Error total empleados:", error);
+        setTotalEmpleados(0);
       }
     };
 
     const getCumpleaneros = async () => {
       try {
-        const res = await fetch("http://localhost:3001/empleados/cumpleaneros");
+        const res = await fetch(`${API}/empleados/cumpleaneros`, {
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        });
+
         const data = await res.json();
+
+        if (!res.ok || !Array.isArray(data)) {
+          setCumpleaneros([]);
+          return;
+        }
+
         setCumpleaneros(data);
+
       } catch (error) {
-        console.error("Error obteniendo cumpleaños:", error);
+        console.error("Error cumpleaños:", error);
+        setCumpleaneros([]);
       }
     };
 
     getTotal();
     getCumpleaneros();
-  }, []);
+
+  }, [token, navigate]);
 
   return (
     <div className="app-container">
@@ -83,7 +142,7 @@ function Dashboard() {
                 <div
                   key={emp.id}
                   className="search-item"
-                  onMouseDown={() => navigate(`/empleado/${emp.id}`)} // 🔹 reemplazamos window.location.href
+                  onMouseDown={() => navigate(`/empleado/${emp.id}`)}
                 >
                   <strong>{emp.nombre}</strong>
                   <p>{emp.cargo}</p>
@@ -93,9 +152,17 @@ function Dashboard() {
           )}
         </div>
 
+        {/* 👤 USER + LOGOUT */}
         <div className="user-profile">
           <img src="https://i.pravatar.cc/40" alt="Usuario"/>
-          <span>Usuario</span>
+
+          <span>
+            {user?.nombre || "Usuario"}
+          </span>
+
+          <button className="logout-btn" onClick={handleLogout}>
+            Logout
+          </button>
         </div>
       </header>
 
@@ -118,6 +185,7 @@ function Dashboard() {
 
       {/* CONTENIDO */}
       <main className="dashboard-content">
+
         <div className="card">
           <h3>Total Empleados</h3>
           <p>{totalEmpleados}</p>
@@ -136,6 +204,7 @@ function Dashboard() {
         <div className="card">
           <h3>Cumpleaños del Mes</h3>
           <p>{cumpleaneros.length}</p>
+
           <div style={{ fontSize: "0.85rem", marginTop: "5px" }}>
             {cumpleaneros.length === 0 ? (
               <p>No hay cumpleaños</p>
@@ -144,6 +213,7 @@ function Dashboard() {
                 const fecha = new Date(emp.fecha_nacimiento);
                 const opciones = { day: "2-digit", month: "long" };
                 const fechaFormateada = fecha.toLocaleDateString("es-CO", opciones);
+
                 return (
                   <p key={emp.id}>
                     {emp.nombre} - {fechaFormateada}
@@ -158,6 +228,7 @@ function Dashboard() {
           <h3>Alertas Pendientes</h3>
           <p>3</p>
         </div>
+
       </main>
 
       {/* FOOTER */}

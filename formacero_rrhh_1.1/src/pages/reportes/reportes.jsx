@@ -1,44 +1,71 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import "./reportes.css";
 
 function Reportes() {
 
-  const [reportes,setReportes] = useState([
-    {
-      id:1,
-      empleado:"Juan Pérez",
-      fecha:"12 Marzo 2026",
-      descripcion:"Llegó tarde al turno de la mañana.",
-      decision:"Advertencia verbal",
-      estado:"pendiente"
-    },
-    {
-      id:2,
-      empleado:"María Gómez",
-      fecha:"10 Marzo 2026",
-      descripcion:"Accidente leve en zona de producción.",
-      decision:"Se activó protocolo de seguridad.",
-      estado:"resuelto"
-    },
-    {
-      id:3,
-      empleado:"Carlos López",
-      fecha:"8 Marzo 2026",
-      descripcion:"Discusión con compañero de trabajo.",
-      decision:"Citación con RRHH",
-      estado:"pendiente"
-    }
-  ]);
+  const [reportes,setReportes] = useState([]);
 
-  function cambiarEstado(id){
-    setReportes(
-      reportes.map(rep =>
-        rep.id === id
-          ? {...rep, estado: rep.estado === "resuelto" ? "pendiente" : "resuelto"}
-          : rep
-      )
-    );
+  // 🔐 OBTENER REPORTES DESDE BACKEND
+  useEffect(() => {
+    async function cargarReportes(){
+      try {
+
+        const token = localStorage.getItem("token");
+
+        const res = await fetch("http://localhost:3001/api/reportes", {
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        });
+
+        const data = await res.json();
+
+        if(!res.ok){
+          throw new Error(data.message || "Error al cargar reportes");
+        }
+
+        setReportes(data);
+
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    cargarReportes();
+  }, []);
+
+  // 🔄 CAMBIAR ESTADO (OPCIONAL BACKEND)
+  async function cambiarEstado(id){
+
+    try {
+
+      const token = localStorage.getItem("token");
+
+      const res = await fetch(`http://localhost:3001/api/reportes/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        }
+      });
+
+      if(!res.ok){
+        throw new Error("Error al actualizar estado");
+      }
+
+      // actualización local (no rompemos tu lógica)
+      setReportes(
+        reportes.map(rep =>
+          rep.id === id
+            ? {...rep, estado: rep.estado === "resuelto" ? "pendiente" : "resuelto"}
+            : rep
+        )
+      );
+
+    } catch (error) {
+      console.error(error);
+    }
   }
 
   return (
@@ -48,10 +75,10 @@ function Reportes() {
       <header className="header">
         <div className="logo">Formacero</div>
         <div className="search-bar">
-        <input
-        type="text"
-        placeholder="Buscar empleados, cargos o documentos..."
-        />
+          <input
+            type="text"
+            placeholder="Buscar empleados, cargos o documentos..."
+          />
         </div>
         <Link to="/dashboard" className="back-btn">← Volver al Panel</Link>
       </header>

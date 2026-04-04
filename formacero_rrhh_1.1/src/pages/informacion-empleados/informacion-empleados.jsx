@@ -1,18 +1,28 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import "./informacion-empleados.css";
 
 function InformacionEmpleados() {
+
+  const navigate = useNavigate();
 
   const [search, setSearch] = useState("");
   const [openRow, setOpenRow] = useState(null);
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // ✅ TOKEN
+  const token = localStorage.getItem("token");
+
   // 🔹 OBTENER EMPLEADOS DESDE BACKEND
   const getEmployees = async () => {
     try {
-      const res = await fetch("http://localhost:3001/empleados");
+      const res = await fetch("http://localhost:3001/api/empleados", {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
       const data = await res.json();
 
       console.log("DATA BACKEND:", data);
@@ -39,10 +49,18 @@ function InformacionEmpleados() {
   };
 
   useEffect(() => {
-    getEmployees();
-  }, []);
 
-  // 🔍 FILTRO (🔥 ESTO SOLUCIONA EL CRASH)
+    // 🔥 PROTECCIÓN
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+
+    getEmployees();
+
+  }, [token, navigate]);
+
+  // 🔍 FILTRO
   const filteredEmployees = employees.filter(emp =>
     emp.nombre.toLowerCase().includes(search.toLowerCase()) ||
     emp.cargo.toLowerCase().includes(search.toLowerCase()) ||
@@ -63,10 +81,11 @@ function InformacionEmpleados() {
     const newDepartment = prompt("Editar departamento:", employee.departamento);
 
     try {
-      await fetch(`http://localhost:3001/empleados/${employee.id}`, {
+      await fetch(`http://localhost:3001/api/empleados/${employee.id}`, {
         method: "PUT",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}` // ✅ TOKEN
         },
         body: JSON.stringify({
           nombre: newName || employee.nombre,
@@ -95,17 +114,17 @@ function InformacionEmpleados() {
     }
 
     try {
-      await fetch(`http://localhost:3001/empleados/${id}`, {
+      await fetch(`http://localhost:3001/api/empleados/${id}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}` // ✅ TOKEN
         },
         body: JSON.stringify({ motivo }),
       });
 
       alert("Empleado eliminado correctamente ✅");
 
-      // 🔥 FIX AQUÍ
       setEmployees((prev) => prev.filter(emp => emp.id !== id));
 
     } catch (error) {
@@ -114,7 +133,7 @@ function InformacionEmpleados() {
     }
   };
 
-  // 🟡 LOADING (evita pantalla blanca)
+  // 🟡 LOADING
   if (loading) {
     return <p style={{ padding: "20px" }}>Cargando empleados...</p>;
   }
@@ -160,64 +179,62 @@ function InformacionEmpleados() {
             </tr>
           </thead>
 
-              <tbody>
-                {filteredEmployees.length === 0 ? (
-                  // 🔴 MENSAJE CUANDO NO HAY EMPLEADOS
-                  <tr>
-                    <td colSpan="6" style={{ textAlign: "center", padding: "20px" }}>
-                      No hay empleados registrados
+          <tbody>
+            {filteredEmployees.length === 0 ? (
+              <tr>
+                <td colSpan="6" style={{ textAlign: "center", padding: "20px" }}>
+                  No hay empleados registrados
+                </td>
+              </tr>
+            ) : (
+              filteredEmployees.map((emp, index) => (
+                <React.Fragment key={emp.id}>
+                  <tr className="employee-row">
+                    <td className="name">{emp.nombre}</td>
+                    <td className="position">{emp.cargo}</td>
+
+                    <td className="department">
+                      {emp.departamento ? emp.departamento : "Sin asignar"}
+                    </td>
+
+                    <td>
+                      <span className={`status ${emp.estado === "activo" ? "active" : "inactive"}`}>
+                        {emp.estado}
+                      </span>
+                    </td>
+
+                    <td>
+                      <button
+                        className="doc-btn"
+                        onClick={() => toggleDocuments(index)}
+                      >
+                        {openRow === index ? "Ocultar documentos" : "Ver documentos"}
+                      </button>
+                    </td>
+
+                    <td className="actions">
+                      <button className="edit-btn" onClick={() => editEmployee(index)}>
+                        Editar
+                      </button>
+                      <button onClick={() => handleDelete(emp.id)} className="delete-btn">
+                        Eliminar
+                      </button>
                     </td>
                   </tr>
-                ) : (
-                  // 🟢 LISTA NORMAL
-                  filteredEmployees.map((emp, index) => (
-                    <React.Fragment key={emp.id}>
-                      <tr className="employee-row">
-                        <td className="name">{emp.nombre}</td>
-                        <td className="position">{emp.cargo}</td>
 
-                        <td className="department">
-                          {emp.departamento ? emp.departamento : "Sin asignar"}
-                        </td>
-
-                        <td>
-                          <span className={`status ${emp.estado === "activo" ? "active" : "inactive"}`}>
-                            {emp.estado}
-                          </span>
-                        </td>
-
-                        <td>
-                          <button
-                            className="doc-btn"
-                            onClick={() => toggleDocuments(index)}
-                          >
-                            {openRow === index ? "Ocultar documentos" : "Ver documentos"}
-                          </button>
-                        </td>
-
-                        <td className="actions">
-                          <button className="edit-btn" onClick={() => editEmployee(index)}>
-                            Editar
-                          </button>
-                          <button onClick={() => handleDelete(emp.id)} className="delete-btn">
-                            Eliminar
-                          </button>
-                        </td>
-                      </tr>
-
-                      <tr className={`documents-row ${openRow === index ? "open" : ""}`}>
-                        <td colSpan="6">
-                          <div className="documents">
-                            {emp.documentos.map((doc, i) => (
-                              <p key={i}>{doc}</p>
-                            ))}
-                          </div>
-                        </td>
-                      </tr>
-                    </React.Fragment>
-                  ))
-                )}
-              </tbody>
+                  <tr className={`documents-row ${openRow === index ? "open" : ""}`}>
+                    <td colSpan="6">
+                      <div className="documents">
+                        {emp.documentos.map((doc, i) => (
+                          <p key={i}>{doc}</p>
+                        ))}
+                      </div>
+                    </td>
+                  </tr>
+                </React.Fragment>
+              ))
+            )}
+          </tbody>
         </table>
       </section>
 

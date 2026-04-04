@@ -1,21 +1,50 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import "./organizacion.css";
 
+// 🔐 IMPORTANTE
+import { fetchWithAuth } from "../../utils/api";
+
 function Organizacion() {
+
+  const [empleados, setEmpleados] = useState([]);
+
+  // 🔥 TRAER DATOS CON TOKEN
+  useEffect(() => {
+    const getOrganizacion = async () => {
+      try {
+        const res = await fetchWithAuth("/empleados");
+
+        if (!res.ok) throw new Error("Error al cargar organización");
+
+        const data = await res.json();
+        setEmpleados(data);
+
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    getOrganizacion();
+  }, []);
+
   return (
     <div>
 
       {/* HEADER */}
       <header className="header">
         <div className="logo">Formacero</div>
+
         <div className="search-bar">
-        <input
-        type="text"
-        placeholder="Buscar empleados, cargos o documentos..."
-        />
+          <input
+            type="text"
+            placeholder="Buscar empleados, cargos o documentos..."
+          />
         </div>
-        <Link to="/dashboard" className="back-btn">← Volver al Panel</Link>
+
+        <Link to="/dashboard" className="back-btn">
+          ← Volver al Panel
+        </Link>
       </header>
 
       {/* HERO */}
@@ -24,85 +53,48 @@ function Organizacion() {
         <p>Organigrama general de la compañía</p>
       </section>
 
-      {/* ORGANIGRAMA */}
+      {/* ORGANIGRAMA DINÁMICO */}
       <section className="organization">
 
-        {/* NIVEL 1 */}
-        <div className="card gerente">
-          <img src="https://i.pravatar.cc/150?img=12" alt="" />
-          <h3>Juan Vargas</h3>
-          <p>Gerente General</p>
-          <span>Dirige toda la organización</span>
-        </div>
+        {empleados.map(emp => (
+          <div key={emp.id} className={`card ${getClase(emp.cargo)}`}>
 
-        {/* NIVEL 2 */}
-        <div className="card gerente">
-          <img src="https://i.pravatar.cc/150?img=32" alt="" />
-          <h3>Laura Gómez</h3>
-          <p>Gerente RRHH</p>
-          <span>Reporta a Gerente General</span>
-        </div>
+            <img
+              src={`https://i.pravatar.cc/150?u=${emp.id}`}
+              alt=""
+            />
 
-        <div className="card gerente">
-          <img src="https://i.pravatar.cc/150?img=45" alt="" />
-          <h3>Carlos Pérez</h3>
-          <p>Gerente Finanzas</p>
-          <span>Reporta a Gerente General</span>
-        </div>
+            <h3>{emp.nombre}</h3>
+            <p>{emp.cargo}</p>
 
-        {/* NIVEL 3 */}
-        <div className="card admin">
-          <img src="https://i.pravatar.cc/150?img=22" alt="" />
-          <h3>María Torres</h3>
-          <p>Administrativa RRHH</p>
-          <span>A cargo del equipo RRHH</span>
-        </div>
+            <span>
+              {emp.departamento || "Sin departamento"}
+            </span>
 
-        <div className="card admin">
-          <img src="https://i.pravatar.cc/150?img=28" alt="" />
-          <h3>Sofía Ramírez</h3>
-          <p>Administrativa Finanzas</p>
-          <span>A cargo del equipo Finanzas</span>
-        </div>
-
-        {/* NIVEL 4 */}
-        <div className="card empleado">
-          <img src="https://i.pravatar.cc/150?img=8" alt="" />
-          <h3>Andrés López</h3>
-          <p>Empleado RRHH</p>
-          <span>Reporta a María Torres</span>
-        </div>
-
-        <div className="card empleado">
-          <img src="https://i.pravatar.cc/150?img=15" alt="" />
-          <h3>Camila Díaz</h3>
-          <p>Empleado RRHH</p>
-          <span>Reporta a María Torres</span>
-        </div>
-
-        <div className="card empleado">
-          <img src="https://i.pravatar.cc/150?img=51" alt="" />
-          <h3>David Castro</h3>
-          <p>Empleado Finanzas</p>
-          <span>Reporta a Sofía Ramírez</span>
-        </div>
-
-        <div className="card empleado">
-          <img src="https://i.pravatar.cc/150?img=60" alt="" />
-          <h3>Valentina Ruiz</h3>
-          <p>Empleado Finanzas</p>
-          <span>Reporta a Sofía Ramírez</span>
-        </div>
+          </div>
+        ))}
 
       </section>
 
       {/* FOOTER */}
       <footer className="footer">
-        © {new Date().getFullYear()} Formacero. Todos los derechos reservados.
+        © {new Date().getFullYear()} Formacero
       </footer>
 
     </div>
   );
+}
+
+/* 🔥 FUNCIÓN PARA CLASES DINÁMICAS */
+function getClase(cargo) {
+  if (!cargo) return "empleado";
+
+  const c = cargo.toLowerCase();
+
+  if (c.includes("gerente")) return "gerente";
+  if (c.includes("admin")) return "admin";
+
+  return "empleado";
 }
 
 export default Organizacion;

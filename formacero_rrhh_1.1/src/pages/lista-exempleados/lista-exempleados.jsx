@@ -1,17 +1,26 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import "./lista-exempleados.css";
 
 function ListaExempleados() {
+
+  const navigate = useNavigate();
 
   const [openRow, setOpenRow] = useState(null);
   const [exempleados, setExempleados] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // ✅ TOKEN
+  const token = localStorage.getItem("token");
+
   // 🔥 OBTENER EXEMPLEADOS DESDE BACKEND
   const getExempleados = async () => {
     try {
-      const res = await fetch("http://localhost:3001/empleados/exempleados");
+      const res = await fetch("http://localhost:3001/api/empleados/exempleados", {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
 
       if (!res.ok) {
         throw new Error("Error en la respuesta del servidor");
@@ -41,8 +50,16 @@ function ListaExempleados() {
   };
 
   useEffect(() => {
+
+    // 🔥 PROTECCIÓN
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+
     getExempleados();
-  }, []);
+
+  }, [token, navigate]);
 
   function toggleReason(index) {
     setOpenRow(openRow === index ? null : index);
@@ -54,15 +71,17 @@ function ListaExempleados() {
     if (!confirmDelete) return;
 
     try {
-      const res = await fetch(`http://localhost:3001/empleados/exempleados/${id}`, {
+      const res = await fetch(`http://localhost:3001/api/empleados/exempleados/${id}`, {
         method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}` // ✅ TOKEN
+        }
       });
 
       if (!res.ok) {
         throw new Error("Error al eliminar");
       }
 
-      // 🔥 Actualiza lista sin recargar
       setExempleados(prev => prev.filter(emp => emp.id !== id));
 
       alert("Exempleado eliminado definitivamente ✅");
@@ -114,7 +133,7 @@ function ListaExempleados() {
               <th>Fecha Ingreso</th>
               <th>Fecha Retiro</th>
               <th>Motivo</th>
-              <th>Acciones</th> {/* 🔥 NUEVA COLUMNA */}
+              <th>Acciones</th>
             </tr>
           </thead>
 
@@ -144,7 +163,6 @@ function ListaExempleados() {
                       </button>
                     </td>
 
-                    {/* 🔥 BOTÓN ELIMINAR */}
                     <td>
                       <button
                         className="delete-btn"

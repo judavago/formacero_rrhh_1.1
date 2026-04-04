@@ -1,4 +1,5 @@
 import { db } from "../db.js";
+import bcrypt from "bcrypt";
 
 // 🔹 OBTENER EMPLEADOS ACTIVOS
 export const getEmpleados = (req, res) => {
@@ -27,6 +28,7 @@ export const countEmpleados = (req, res) => {
 
 // 🔹 CREAR EMPLEADO
 export const createEmpleado = (req, res) => {
+
   const {
     nombre,
     cedula,
@@ -60,16 +62,46 @@ export const createEmpleado = (req, res) => {
       departamento || null,
       fechaNacimiento || null
     ],
-    (err, result) => {
+    async (err, result) => {
+
       if (err) {
-        console.error("ERROR INSERT:", err);
+        console.error(err);
         return res.status(500).json(err);
       }
 
-      res.json({
-        message: "Empleado creado",
-        id: result.insertId
-      });
+      const empleadoId = result.insertId;
+
+      // 🔐 PASSWORD TEMPORAL
+      // 🔐 PASSWORD TEMPORAL
+      const defaultPassword = cedula; // o "Temp123*"
+      const hashedPassword = await bcrypt.hash(defaultPassword, 10);
+
+      const sqlUser = `
+        INSERT INTO usuarios (nombre, correo, password, rol, empleado_id, username)
+        VALUES (?, ?, ?, 'empleado', ?, ?)
+      `;
+
+      db.query(
+        sqlUser,
+        [nombre, correo, hashedPassword, empleadoId, cedula],
+        (err) => {
+
+          if (err) {
+            console.error("Error creando usuario:", err);
+            return res.status(500).json(err);
+          }
+
+          res.json({
+            message: "Empleado y usuario creados",
+            credenciales: {
+              username: cedula,
+              password: defaultPassword
+            }
+          });
+
+        }
+      );
+
     }
   );
 };
@@ -245,5 +277,29 @@ export const getEmpleadoById = (req, res) => {
     }
 
     res.json(result[0]); // retornamos un solo empleado
+  });
+};
+
+// 🔹 OBTENER DATOS PARA CERTIFICADO
+export const getCertificadoEmpleado = (req, res) => {
+  const { id } = req.params;
+
+  const sql = `
+    SELECT nombre, cargo, salario, fecha_ingreso
+    FROM empleados
+    WHERE id = ?
+  `;
+
+  db.query(sql, [id], (err, result) => {
+    if (err) {
+      console.error("ERROR CERTIFICADO:", err);
+      return res.status(500).json(err);
+    }
+
+    if (result.length === 0) {
+      return res.status(404).json({ message: "Empleado no encontrado" });
+    }
+
+    res.json(result[0]);
   });
 };

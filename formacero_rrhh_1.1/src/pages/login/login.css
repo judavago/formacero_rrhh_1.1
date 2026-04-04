@@ -1,0 +1,58 @@
+/* CONTENEDOR PRINCIPAL */
+.login-container {
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+}
+
+/* CAJA */
+.login-box {
+  background: white;
+  padding: 40px;
+  border-radius: 12px;
+  width: 320px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  text-align: center;
+}
+
+/* TITULO */
+.login-box h2 {
+  margin-bottom: 25px;
+  color: #1e3a8a;
+}
+
+/* INPUTS */
+.login-box input {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 15px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  font-size: 14px;
+}
+
+/* BOTÓN */
+.login-box button {
+  width: 100%;
+  padding: 12px;
+  background: #1e3a8a;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.login-box button:hover {
+  background: #3b82f6;
+}
+
+/* ERROR */
+.error {
+  color: red;
+  font-size: 13px;
+  margin-bottom: 10px;
+}

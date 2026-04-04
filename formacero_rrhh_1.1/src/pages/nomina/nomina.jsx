@@ -1,32 +1,64 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import "./nomina.css";
 import html2pdf from "html2pdf.js";
 
+// 🔐 IMPORTANTE
+import { fetchWithAuth } from "../../utils/api";
+
 function Nomina() {
 
-  const [empleado, setEmpleado] = useState("");
-  const [salario, setSalario] = useState("");
+  const [empleados, setEmpleados] = useState([]);
+  const [empleadoSeleccionado, setEmpleadoSeleccionado] = useState(null);
   const [dias, setDias] = useState("");
   const [desprendible, setDesprendible] = useState("");
 
   const desprendibleRef = useRef();
 
+  // 🔥 TRAER EMPLEADOS DEL BACKEND
+  useEffect(() => {
+    const getEmpleados = async () => {
+      try {
+        const res = await fetchWithAuth("/empleados");
+
+        if (!res.ok) throw new Error("Error al cargar empleados");
+
+        const data = await res.json();
+        setEmpleados(data);
+
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    getEmpleados();
+  }, []);
+
+  // 🔥 CUANDO SELECCIONA EMPLEADO
+  const handleEmpleadoChange = (id) => {
+    const emp = empleados.find(e => e.id === parseInt(id));
+    setEmpleadoSeleccionado(emp);
+  };
+
   function generarDesprendible() {
-    if (!empleado || !salario || !dias) {
+
+    if (!empleadoSeleccionado || !dias) {
       alert("Completa todos los campos");
       return;
     }
 
+    const salario = empleadoSeleccionado.salario;
     const salarioDia = salario / 30;
     const total = salarioDia * dias;
 
     const texto = `
 Empresa: Formacero S.A.S
 
-Empleado: ${empleado}
+Empleado: ${empleadoSeleccionado.nombre}
 
-Salario Base: $${salario}
+Cargo: ${empleadoSeleccionado.cargo}
+
+Salario Base: $${salario.toLocaleString()}
 
 Días trabajados: ${dias}
 
@@ -63,40 +95,49 @@ Fecha de generación: ${new Date().toLocaleDateString()}
       {/* HEADER */}
       <header className="header">
         <div className="logo">Formacero</div>
+
         <div className="search-bar">
-        <input
-        type="text"
-        placeholder="Buscar empleados, cargos o documentos..."
-        />
+          <input
+            type="text"
+            placeholder="Buscar empleados..."
+          />
         </div>
-        <Link to="/dashboard" className="back-btn">← Volver al Panel</Link>
+
+        <Link to="/dashboard" className="back-btn">
+          ← Volver al Panel
+        </Link>
       </header>
 
       {/* HERO */}
       <section className="hero">
         <h1>Generar Desprendible de Pago</h1>
-        <p>Gestión de nómina y generación de desprendibles para empleados</p>
+        <p>Gestión de nómina y generación de desprendibles</p>
       </section>
 
-      {/* SECCIÓN DEL FORMULARIO */}
+      {/* FORMULARIO */}
       <section className="seccion-formulario-nomina">
 
         <div className="contenedor-nomina">
 
           <label>Seleccionar empleado:</label>
-          <select value={empleado} onChange={(e) => setEmpleado(e.target.value)}>
+          <select onChange={(e) => handleEmpleadoChange(e.target.value)}>
             <option value="">-- Seleccione --</option>
-            <option value="Juan Pérez">Juan Pérez</option>
-            <option value="María Gómez">María Gómez</option>
-            <option value="Carlos López">Carlos López</option>
+            {empleados.map(emp => (
+              <option key={emp.id} value={emp.id}>
+                {emp.nombre} - {emp.cargo}
+              </option>
+            ))}
           </select>
 
           <label>Salario Base:</label>
           <input
-            type="number"
-            placeholder="Ej: 2000000"
-            value={salario}
-            onChange={(e) => setSalario(e.target.value)}
+            type="text"
+            value={
+              empleadoSeleccionado
+                ? `$${empleadoSeleccionado.salario.toLocaleString()}`
+                : ""
+            }
+            disabled
           />
 
           <label>Días trabajados:</label>
@@ -107,10 +148,19 @@ Fecha de generación: ${new Date().toLocaleDateString()}
             onChange={(e) => setDias(e.target.value)}
           />
 
-          <button onClick={generarDesprendible}>Generar</button>
-          <button onClick={descargarPDF}>Descargar PDF</button>
+          <button onClick={generarDesprendible}>
+            Generar
+          </button>
 
-          <div id="desprendible" className="desprendible" ref={desprendibleRef}>
+          <button onClick={descargarPDF}>
+            Descargar PDF
+          </button>
+
+          <div
+            id="desprendible"
+            className="desprendible"
+            ref={desprendibleRef}
+          >
             <pre>{desprendible}</pre>
           </div>
 
@@ -120,7 +170,7 @@ Fecha de generación: ${new Date().toLocaleDateString()}
 
       {/* FOOTER */}
       <footer className="footer">
-        © {new Date().getFullYear()} Formacero. Todos los derechos reservados.
+        © {new Date().getFullYear()} Formacero
       </footer>
 
     </div>

@@ -11,8 +11,11 @@ import {
   CertificadoLaboral,
 } from "./pages/pages.jsx";
 
-// 🔹 Import corregido para EmpleadoDetalle
-import EmpleadoDetalle from "./pages/empleado-detalle/empleado-detalle";
+// 🔹 Import detalle empleado
+import EmpleadoDetalle from "./pages/empleado-detalle/empleado-detalle.jsx";
+
+// 🔹 IMPORT LOGIN (NUEVO)
+import Login from "./pages/login/login.jsx";
 
 import './layout.css';
 
@@ -20,8 +23,14 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+
+        {/* 🔥 LOGIN COMO PANTALLA INICIAL */}
+        <Route path="/" element={<Login />} />
+
+        {/* 🔥 DASHBOARD */}
         <Route path="/dashboard" element={<Dashboard />} />
+
+        {/* 🔹 RESTO DEL SISTEMA */}
         <Route path="/registrar-empleados" element={<RegistrarEmpleados />} />
         <Route path="/nomina" element={<Nomina />} />
         <Route path="/vacaciones" element={<Vacaciones />} />
@@ -31,10 +40,12 @@ function App() {
         <Route path="/lista-exempleados" element={<ListaExempleados />} />
         <Route path="/certificado-laboral" element={<CertificadoLaboral />} />
 
-        {/* 🔹 Nueva ruta para detalle de empleado */}
+        {/* 🔹 DETALLE EMPLEADO */}
         <Route path="/empleado/:id" element={<EmpleadoDetalle />} />
 
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        {/* 🔥 CUALQUIER RUTA → LOGIN */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+
       </Routes>
     </Router>
   );

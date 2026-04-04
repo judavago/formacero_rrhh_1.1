@@ -48,3 +48,7 @@ CREATE TABLE organizacion (
   rol VARCHAR(100),
   FOREIGN KEY (empleado_id) REFERENCES empleados(id)
 );
+
+Credenciales del administrador: 
+📧 Correo: admin@formacero.com
+🔑 Password: Admin123*

@@ -13,7 +13,7 @@ function RegistrarEmpleados() {
     cargo: "",
     salario: "",
     fechaIngreso: "",
-    fechaNacimiento: "", // 🔥 AGREGADO
+    fechaNacimiento: "",
     departamento: "",
     foto: null
   });
@@ -60,22 +60,30 @@ function RegistrarEmpleados() {
         cargo: form.cargo,
         salario: form.salario,
         fechaIngreso: form.fechaIngreso,
-        fechaNacimiento: form.fechaNacimiento, // 🔥 IMPORTANTE
+        fechaNacimiento: form.fechaNacimiento,
         departamento: form.departamento
       };
 
-      const res = await fetch("http://localhost:3001/empleados", {
+      // 🔐 TOKEN AGREGADO
+      const token = localStorage.getItem("token");
+
+      const res = await fetch("http://localhost:3001/api/empleados", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}` // 🔥 AQUÍ ESTÁ LA MAGIA
         },
         body: JSON.stringify(nuevoEmpleado)
       });
 
       const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || "Error al registrar empleado");
+      }
+
       console.log(data);
 
-      // 🔹 mantener preview local
       const nuevoLocal = {
         ...form,
         preview,
@@ -84,7 +92,6 @@ function RegistrarEmpleados() {
 
       setEmpleados([...empleados, nuevoLocal]);
 
-      // 🔄 limpiar formulario
       setForm({
         nombre:"",
         cedula:"",
@@ -92,7 +99,7 @@ function RegistrarEmpleados() {
         cargo:"",
         salario:"",
         fechaIngreso:"",
-        fechaNacimiento:"", // 🔥 LIMPIAR TAMBIÉN
+        fechaNacimiento:"",
         departamento: "",
         foto:null
       });
@@ -100,7 +107,13 @@ function RegistrarEmpleados() {
       setPreview(null);
       setDocumentos([]);
 
-      alert("✅ Empleado registrado correctamente");
+      alert(`
+✅ Empleado registrado correctamente
+
+🔐 Credenciales de acceso:
+Usuario: ${data.credenciales?.username || "N/A"}
+Contraseña: ${data.credenciales?.password || "N/A"}
+`);
 
     } catch (error) {
       console.error("Error:", error);
@@ -222,7 +235,7 @@ function RegistrarEmpleados() {
                   <p>Cargo: {emp.cargo}</p>
                   <p>Salario: ${emp.salario}</p>
                   <p>Ingreso: {emp.fechaIngreso}</p>
-                  <p>Nacimiento: {emp.fechaNacimiento}</p> {/* 🔥 EXTRA */}
+                  <p>Nacimiento: {emp.fechaNacimiento}</p>
                   <p>Departamento: {emp.departamento}</p>
                 </div>
 

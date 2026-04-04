@@ -1,63 +1,162 @@
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import "./certificado-laboral.css";
 
+const API = "http://localhost:3001/api";
+
 function CertificadoLaboral() {
+
+  const navigate = useNavigate();
 
   const [selected, setSelected] = useState("");
   const [text, setText] = useState("");
   const [visible, setVisible] = useState(false);
+  const [employees, setEmployees] = useState([]);
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const employees = {
-    juan: {
-      nombre: "Juan Vargas",
-      cargo: "Gerente General",
-      fechaIngreso: "01 de Enero de 2020",
-      salario: "$8.000.000"
-    },
-    laura: {
-      nombre: "Laura Gómez",
-      cargo: "Gerente RRHH",
-      fechaIngreso: "15 de Marzo de 2021",
-      salario: "$6.500.000"
-    },
-    carlos: {
-      nombre: "Carlos Pérez",
-      cargo: "Gerente Finanzas",
-      fechaIngreso: "10 de Junio de 2019",
-      salario: "$7.200.000"
+  // ✅ TOKEN
+  const token = localStorage.getItem("token");
+
+  // 🔹 Obtener usuario logueado
+  useEffect(() => {
+    try {
+      const storedUser = JSON.parse(localStorage.getItem("user"));
+      if (!storedUser) throw new Error("No hay sesión");
+      setUser(storedUser);
+    } catch {
+      setError("No hay usuario logueado");
     }
-  };
+  }, []);
 
-  const generateCertificate = () => {
+  // 🔥 VALIDAR TOKEN
+  useEffect(() => {
+    if (!token) {
+      navigate("/login");
+    }
+  }, [token, navigate]);
+
+  // 🔹 Auto-seleccionar empleado
+  useEffect(() => {
+    if (user?.rol === "empleado") {
+      setSelected(user.id);
+    }
+  }, [user]);
+
+  // 🔹 Cargar empleados
+  useEffect(() => {
+
+    if (!user) return;
+
+    const fetchData = async () => {
+      try {
+
+        let res;
+
+        if (user.rol === "admin") {
+          res = await fetch(`${API}/empleados`, {
+            headers: {
+              "Authorization": `Bearer ${token}`
+            }
+          });
+        } else {
+          res = await fetch(`${API}/empleados/${user.id}`, {
+            headers: {
+              "Authorization": `Bearer ${token}`
+            }
+          });
+        }
+
+        if (!res.ok) {
+          throw new Error("Error al cargar empleados");
+        }
+
+        const data = await res.json();
+
+        // Asegurar array
+        setEmployees(Array.isArray(data) ? data : [data]);
+
+      } catch (err) {
+        console.error(err);
+        setError("No se pudieron cargar los empleados");
+      }
+    };
+
+    fetchData();
+
+  }, [user, token]);
+
+  // 🔹 Generar certificado
+  const generateCertificate = async () => {
 
     if (!selected) {
       alert("Selecciona un empleado");
       return;
     }
 
-    const employee = employees[selected];
+    try {
 
-    const today = new Date().toLocaleDateString("es-CO", {
-      day: "2-digit",
-      month: "long",
-      year: "numeric"
-    });
+      setLoading(true);
+      setError("");
+      setVisible(false);
 
-    const certificateText = `
+      const res = await fetch(`${API}/empleados/certificado/${selected}`, {
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
+
+      if (!res.ok) {
+        throw new Error("Error al generar certificado");
+      }
+
+      const employee = await res.json();
+
+      const fechaIngreso = new Date(employee.fecha_ingreso).toLocaleDateString("es-CO", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric"
+      });
+
+      const salario = new Intl.NumberFormat("es-CO").format(employee.salario);
+
+      const today = new Date().toLocaleDateString("es-CO", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric"
+      });
+
+      const certificateText = `
 La empresa Formacero S.A.S certifica que el(la) señor(a) ${employee.nombre}
 se encuentra vinculado(a) laboralmente con nuestra organización desempeñando
-el cargo de ${employee.cargo} desde el ${employee.fechaIngreso} hasta la fecha.
+el cargo de ${employee.cargo} desde el ${fechaIngreso} hasta la fecha.
 
-Actualmente devenga un salario mensual de ${employee.salario}.
+Actualmente devenga un salario mensual de $${salario}.
 
 Este certificado se expide a solicitud del interesado(a) el día ${today}.
 `;
 
-    setText(certificateText);
-    setVisible(true);
+      setText(certificateText);
+      setVisible(true);
+
+    } catch (err) {
+      console.error(err);
+      setError("No se pudo generar el certificado");
+    } finally {
+      setLoading(false);
+    }
 
   };
+
+  // 🔹 Estados de error
+  if (error) {
+    return <p style={{ padding: "20px", color: "red" }}>{error}</p>;
+  }
+
+  if (!user) {
+    return <p style={{ padding: "20px" }}>Cargando usuario...</p>;
+  }
 
   return (
 
@@ -67,10 +166,7 @@ Este certificado se expide a solicitud del interesado(a) el día ${today}.
       <header className="header">
         <div className="logo">Formacero</div>
         <div className="search-bar">
-        <input
-        type="text"
-        placeholder="Buscar empleados, cargos o documentos..."
-        />
+          <input placeholder="Buscar empleados..." />
         </div>
         <Link to="/dashboard" className="back-btn">← Volver al Panel</Link>
       </header>
@@ -78,11 +174,10 @@ Este certificado se expide a solicitud del interesado(a) el día ${today}.
       {/* HERO */}
       <section className="hero">
         <h1>Generar Certificado Laboral</h1>
-        <p>Seleccione un empleado y genere su certificado laboral</p>
+        <p>Seleccione un empleado</p>
       </section>
 
-
-      {/* SECCIÓN GENERADOR */}
+      {/* CONTENIDO */}
       <section className="seccion-certificado">
 
         <div className="container">
@@ -91,33 +186,46 @@ Este certificado se expide a solicitud del interesado(a) el día ${today}.
 
             <select
               value={selected}
-              onChange={(e)=>setSelected(e.target.value)}
+              onChange={(e) => {
+                setSelected(e.target.value);
+                setVisible(false);
+              }}
+              disabled={user.rol === "empleado"}
             >
               <option value="">Seleccionar empleado</option>
-              <option value="juan">Juan Vargas</option>
-              <option value="laura">Laura Gómez</option>
-              <option value="carlos">Carlos Pérez</option>
+
+              {employees.length > 0 ? (
+                employees.map(emp => (
+                  <option key={emp.id} value={emp.id}>
+                    {emp.nombre}
+                  </option>
+                ))
+              ) : (
+                <option disabled>No hay empleados</option>
+              )}
+
             </select>
 
-            <button onClick={generateCertificate}>
-              Generar
+            <button onClick={generateCertificate} disabled={loading}>
+              {loading ? "Generando..." : "Generar"}
             </button>
 
-            <button onClick={()=>window.print()}>
+            <button onClick={() => window.print()} disabled={!visible}>
               Imprimir
             </button>
 
           </div>
 
-
           <div
             className="certificate"
-            style={{display: visible ? "block" : "none"}}
+            style={{ display: visible ? "block" : "none" }}
           >
 
             <h2>CERTIFICADO LABORAL</h2>
 
-            <p>{text}</p>
+            <p style={{ whiteSpace: "pre-line", textAlign: "justify" }}>
+              {text}
+            </p>
 
             <div className="firma">
               <p>Cordialmente,</p>
@@ -131,10 +239,9 @@ Este certificado se expide a solicitud del interesado(a) el día ${today}.
 
       </section>
 
-
       {/* FOOTER */}
       <footer className="footer">
-        © {new Date().getFullYear()} Formacero. Todos los derechos reservados.
+        © {new Date().getFullYear()} Formacero
       </footer>
 
     </div>

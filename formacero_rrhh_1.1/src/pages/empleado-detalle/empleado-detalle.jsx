@@ -1,17 +1,32 @@
 import React, { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import "../../layout.css";
 import "./empleado-detalle.css";
 
 function EmpleadoDetalle() {
 
   const { id } = useParams();
+  const navigate = useNavigate();
   const [empleado, setEmpleado] = useState(null);
 
+  // ✅ TOKEN
+  const token = localStorage.getItem("token");
+
   useEffect(() => {
+
+    // 🔥 PROTECCIÓN
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+
     const getEmpleado = async () => {
       try {
-        const res = await fetch(`http://localhost:3001/empleados/${id}`);
+        const res = await fetch(`http://localhost:3001/api/empleados/${id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
 
         if (!res.ok) throw new Error("Empleado no encontrado");
 
@@ -24,7 +39,8 @@ function EmpleadoDetalle() {
     };
 
     getEmpleado();
-  }, [id]);
+
+  }, [id, token, navigate]);
 
   const formatFecha = (fecha) => {
     if (!fecha) return "-";
