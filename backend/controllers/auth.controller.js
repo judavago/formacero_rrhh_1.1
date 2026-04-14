@@ -1,8 +1,8 @@
-import { db } from "../db.js";
+import { supabase } from "../config/supabase.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
-export const login = (req, res) => {
+export const login = async (req, res) => {
 
   const { correo, password } = req.body;
 
@@ -12,21 +12,27 @@ export const login = (req, res) => {
     });
   }
 
-  const sql = "SELECT * FROM usuarios WHERE correo=?";
+  try {
 
-  db.query(sql, [correo], async (err, result) => {
+    // 🔍 Buscar usuario
+    const { data, error } = await supabase
+      .from("usuarios")
+      .select("*")
+      .eq("correo", correo)
+      .limit(1);
 
-    if (err) {
+    if (error) {
+      console.error("ERROR DB:", error);
       return res.status(500).json({ message: "Error servidor" });
     }
 
-    if (result.length === 0) {
+    if (!data || data.length === 0) {
       return res.status(404).json({
         message: "Usuario no existe"
       });
     }
 
-    const user = result[0];
+    const user = data[0];
 
     try {
 
@@ -65,6 +71,11 @@ export const login = (req, res) => {
       });
     }
 
-  });
+  } catch (err) {
+    console.error("ERROR GENERAL:", err);
+    return res.status(500).json({
+      message: "Error servidor"
+    });
+  }
 
 };

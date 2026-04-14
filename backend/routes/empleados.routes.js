@@ -13,46 +13,42 @@ import {
   getCertificadoEmpleado
 } from "../controllers/empleados.controller.js";
 
-// 🔥 NUEVO IMPORT
 import { verifyToken } from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
 
+// 🔐 Middleware global (evita repetirlo en cada ruta)
+router.use(verifyToken);
 
-// 🔹 =============================
-// 🔍 BUSQUEDAS Y CONSULTAS
+// 🔍 =============================
+// BUSQUEDAS Y CONSULTAS
 // =============================
-router.get("/search", verifyToken, searchEmpleado);           
-router.get("/count", verifyToken, countEmpleados);
-router.get("/cumpleaneros", verifyToken, getCumpleaneros);
-router.get("/exempleados", verifyToken, getExEmpleados);
+router.get("/search", searchEmpleado);           
+router.get("/count", countEmpleados);
+router.get("/cumpleaneros", getCumpleaneros);
+router.get("/exempleados", getExEmpleados);
 
-
-// 🔹 =============================
-// 📄 CERTIFICADOS (ANTES DE :id)
+// 📄 =============================
+// CERTIFICADOS
 // =============================
-router.get("/certificado/:id", verifyToken, getCertificadoEmpleado);
+router.get("/certificado/:id", getCertificadoEmpleado);
 
-
-// 🔹 =============================
-// 🧾 CRUD GENERAL
+// 🧾 =============================
+// CRUD GENERAL
 // =============================
-router.get("/", verifyToken, getEmpleados);
-router.post("/", verifyToken, createEmpleado);
-router.put("/:id", verifyToken, updateEmpleado);
-router.delete("/:id", verifyToken, deleteEmpleado);
+router.get("/", getEmpleados);
+router.post("/", createEmpleado);
+router.put("/:id", updateEmpleado);
+router.delete("/:id", deleteEmpleado);
 
-
-// 🔹 =============================
-// 🗑 EX-EMPLEADOS
+// 🗑 =============================
+// EX-EMPLEADOS
 // =============================
-router.delete("/exempleados/:id", verifyToken, deleteExEmpleado);
+router.delete("/exempleados/:id", deleteExEmpleado);
 
-
-// 🔹 =============================
-// 👤 DETALLE POR ID (SIEMPRE AL FINAL)
+// 👤 =============================
+// DETALLE POR ID (SIEMPRE AL FINAL)
 // =============================
-router.get("/:id", verifyToken, getEmpleadoById);
-
+router.get("/:id", getEmpleadoById);
 
 export default router;

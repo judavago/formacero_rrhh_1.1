@@ -2,8 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./login.css";
 
-const API = "http://localhost:3001/api";
-
+const API = "https://miniature-train-pj9wvw47jw7xc46-3001.app.github.dev/api";
 function Login() {
 
   const [correo, setCorreo] = useState("");
@@ -43,7 +42,7 @@ function Login() {
         return;
       }
 
-      // 🔐 VALIDACIÓN EXTRA (evita bugs silenciosos)
+      // 🔐 VALIDACIÓN EXTRA
       if (!data.token || !data.user) {
         setError("Respuesta inválida del servidor ❌");
         return;
@@ -52,15 +51,21 @@ function Login() {
       // 🔐 GUARDAR TOKEN
       localStorage.setItem("token", data.token);
 
-      // 🔐 GUARDAR USUARIO (normalizado)
-      localStorage.setItem("user", JSON.stringify({
-        id: data.user.empleado_id,
+      // 🔥 NORMALIZAR USUARIO (IMPORTANTE CON SUPABASE)
+      const userData = {
+        id: data.user.empleado_id || data.user.id,
         rol: data.user.rol,
         nombre: data.user.nombre
-      }));
+      };
 
-      // 🔥 REDIRECCIÓN SEGURA
-      navigate("/dashboard");
+      localStorage.setItem("user", JSON.stringify(userData));
+
+      // 🔥 REDIRECCIÓN SEGÚN ROL (MEJORA PRO)
+      if (userData.rol === "admin") {
+        navigate("/dashboard");
+      } else {
+        navigate("/empleado"); // opcional si tienes vista empleado
+      }
 
     } catch (err) {
       console.error("ERROR LOGIN:", err);

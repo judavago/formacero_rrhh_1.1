@@ -1,5 +1,6 @@
 import bcrypt from "bcrypt";
-import { db } from "../db.js";
+import { supabase } from "./config/supabase.js";
+
 const createAdmin = async () => {
 
   const correo = "admin@formacero.com";
@@ -7,45 +8,46 @@ const createAdmin = async () => {
   try {
 
     // 🔍 Verificar si ya existe
-    db.query(
-      "SELECT * FROM usuarios WHERE correo = ?",
-      [correo],
-      async (err, results) => {
+    const { data, error } = await supabase
+      .from("usuarios")
+      .select("*")
+      .eq("correo", correo)
+      .limit(1);
 
-        if (err) {
-          console.error("❌ Error consultando:", err);
-          process.exit();
-        }
+    if (error) {
+      console.error("❌ Error consultando:", error);
+      process.exit();
+    }
 
-        if (results.length > 0) {
-          console.log("⚠️ El admin ya existe, no se creó otro");
-          process.exit();
-        }
+    if (data && data.length > 0) {
+      console.log("⚠️ El admin ya existe, no se creó otro");
+      process.exit();
+    }
 
-        // 🔐 Encriptar contraseña
-        const password = "Admin123*";
-        const hashed = await bcrypt.hash(password, 10);
+    // 🔐 Encriptar contraseña
+    const password = "Admin123*";
+    const hashed = await bcrypt.hash(password, 10);
 
-        // 💾 Insertar admin
-        db.query(
-          "INSERT INTO usuarios (nombre, correo, password, rol) VALUES (?, ?, ?, ?)",
-          ["Administrador", correo, hashed, "admin"],
-          (err) => {
-            if (err) {
-              console.error("❌ Error insertando:", err);
-              process.exit();
-            }
+    // 💾 Insertar admin
+    const { error: insertError } = await supabase
+      .from("usuarios")
+      .insert([{
+        nombre: "Administrador",
+        correo,
+        password: hashed,
+        rol: "admin"
+      }]);
 
-            console.log("✅ Admin creado correctamente");
-            console.log("📧 Correo: admin@formacero.com");
-            console.log("🔑 Password: Admin123*");
+    if (insertError) {
+      console.error("❌ Error insertando:", insertError);
+      process.exit();
+    }
 
-            process.exit();
-          }
-        );
+    console.log("✅ Admin creado correctamente");
+    console.log("📧 Correo: admin@formacero.com");
+    console.log("🔑 Password: Admin123*");
 
-      }
-    );
+    process.exit();
 
   } catch (error) {
     console.error("❌ Error general:", error);

@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "concurrently": "^9.2.1"
+  },
+  "scripts": {
+    "dev": "concurrently \"npm --prefix backend run dev\" \"npm --prefix formacero_rrhh_1.1 run dev\""
+  }
+}

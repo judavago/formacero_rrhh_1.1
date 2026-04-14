@@ -1,305 +1,317 @@
-import { db } from "../db.js";
+import { supabase } from "../config/supabase.js";
 import bcrypt from "bcrypt";
 
 // 🔹 OBTENER EMPLEADOS ACTIVOS
-export const getEmpleados = (req, res) => {
-  db.query("SELECT * FROM empleados WHERE estado='activo'", (err, result) => {
-    if (err) {
-      console.error("ERROR GET:", err);
-      return res.status(500).json(err);
-    }
-    res.json(result);
-  });
+export const getEmpleados = async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from("empleados")
+      .select("*")
+      .eq("estado", "activo");
+
+    if (error) throw error;
+
+    res.json(data);
+  } catch (err) {
+    console.error("ERROR GET:", err);
+    res.status(500).json(err);
+  }
 };
 
 // 🔹 CONTAR EMPLEADOS ACTIVOS (DASHBOARD)
-export const countEmpleados = (req, res) => {
-  db.query(
-    "SELECT COUNT(*) AS total FROM empleados WHERE estado='activo'",
-    (err, result) => {
-      if (err) {
-        console.error("ERROR COUNT:", err);
-        return res.status(500).json(err);
-      }
-      res.json(result[0]);
-    }
-  );
+export const countEmpleados = async (req, res) => {
+  try {
+    const { count, error } = await supabase
+      .from("empleados")
+      .select("*", { count: "exact", head: true })
+      .eq("estado", "activo");
+
+    if (error) throw error;
+
+    res.json({ total: count });
+  } catch (err) {
+    console.error("ERROR COUNT:", err);
+    res.status(500).json(err);
+  }
 };
 
 // 🔹 CREAR EMPLEADO
-export const createEmpleado = (req, res) => {
-
-  const {
-    nombre,
-    cedula,
-    correo,
-    cargo,
-    salario,
-    fechaIngreso,
-    departamento,
-    fechaNacimiento
-  } = req.body;
-
-  if (!nombre || !cedula || !cargo) {
-    return res.status(400).json({ message: "Faltan campos obligatorios" });
-  }
-
-  const sql = `
-    INSERT INTO empleados 
-    (nombre, documento, correo, cargo, salario, fecha_ingreso, departamento, estado, fecha_nacimiento)
-    VALUES (?, ?, ?, ?, ?, ?, ?, 'activo', ?)
-  `;
-
-  db.query(
-    sql,
-    [
+export const createEmpleado = async (req, res) => {
+  try {
+    const {
       nombre,
       cedula,
       correo,
       cargo,
       salario,
       fechaIngreso,
-      departamento || null,
-      fechaNacimiento || null
-    ],
-    async (err, result) => {
+      departamento,
+      fechaNacimiento
+    } = req.body;
 
-      if (err) {
-        console.error(err);
-        return res.status(500).json(err);
-      }
-
-      const empleadoId = result.insertId;
-
-      // 🔐 PASSWORD TEMPORAL
-      // 🔐 PASSWORD TEMPORAL
-      const defaultPassword = cedula; // o "Temp123*"
-      const hashedPassword = await bcrypt.hash(defaultPassword, 10);
-
-      const sqlUser = `
-        INSERT INTO usuarios (nombre, correo, password, rol, empleado_id, username)
-        VALUES (?, ?, ?, 'empleado', ?, ?)
-      `;
-
-      db.query(
-        sqlUser,
-        [nombre, correo, hashedPassword, empleadoId, cedula],
-        (err) => {
-
-          if (err) {
-            console.error("Error creando usuario:", err);
-            return res.status(500).json(err);
-          }
-
-          res.json({
-            message: "Empleado y usuario creados",
-            credenciales: {
-              username: cedula,
-              password: defaultPassword
-            }
-          });
-
-        }
-      );
-
+    if (!nombre || !cedula || !cargo) {
+      return res.status(400).json({ message: "Faltan campos obligatorios" });
     }
-  );
+
+    // 1️⃣ Insertar empleado
+    const { data: empleadoData, error: empError } = await supabase
+      .from("empleados")
+      .insert([{
+        nombre,
+        documento: cedula,
+        correo,
+        cargo,
+        salario,
+        fecha_ingreso: fechaIngreso,
+        departamento: departamento || null,
+        estado: "activo",
+        fecha_nacimiento: fechaNacimiento || null
+      }])
+      .select();
+
+    if (empError) throw empError;
+
+    const empleadoId = empleadoData[0].id;
+
+    // 2️⃣ Crear usuario
+    const defaultPassword = cedula;
+    const hashedPassword = await bcrypt.hash(defaultPassword, 10);
+
+    const { error: userError } = await supabase
+      .from("usuarios")
+      .insert([{
+        nombre,
+        correo,
+        password: hashedPassword,
+        rol: "empleado",
+        empleado_id: empleadoId,
+        username: cedula
+      }]);
+
+    if (userError) throw userError;
+
+    res.json({
+      message: "Empleado y usuario creados",
+      credenciales: {
+        username: cedula,
+        password: defaultPassword
+      }
+    });
+
+  } catch (err) {
+    console.error("ERROR CREATE:", err);
+    res.status(500).json(err);
+  }
 };
 
 // 🔹 ACTUALIZAR EMPLEADO
-export const updateEmpleado = (req, res) => {
-  const { id } = req.params;
-  const { nombre, cargo, departamento } = req.body;
+export const updateEmpleado = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { nombre, cargo, departamento } = req.body;
 
-  const sql = `
-    UPDATE empleados 
-    SET nombre=?, cargo=?, departamento=? 
-    WHERE id=?
-  `;
+    const { error } = await supabase
+      .from("empleados")
+      .update({
+        nombre,
+        cargo,
+        departamento: departamento || null
+      })
+      .eq("id", id);
 
-  db.query(
-    sql,
-    [nombre, cargo, departamento || null, id],
-    (err) => {
-      if (err) {
-        console.error("ERROR UPDATE:", err);
-        return res.status(500).json(err);
-      }
+    if (error) throw error;
 
-      res.json({ message: "Empleado actualizado" });
-    }
-  );
+    res.json({ message: "Empleado actualizado" });
+  } catch (err) {
+    console.error("ERROR UPDATE:", err);
+    res.status(500).json(err);
+  }
 };
 
 // 🔥 ELIMINAR → MOVER A EXEMPLEADOS
-export const deleteEmpleado = (req, res) => {
-  const { id } = req.params;
-  const { motivo } = req.body;
+export const deleteEmpleado = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { motivo } = req.body;
 
-  if (!motivo || motivo.trim() === "") {
-    return res.status(400).json({ message: "Motivo obligatorio" });
-  }
-
-  // 1️⃣ Obtener empleado
-  db.query("SELECT * FROM empleados WHERE id=?", [id], (err, result) => {
-    if (err) {
-      console.error("ERROR SELECT:", err);
-      return res.status(500).json(err);
+    if (!motivo || motivo.trim() === "") {
+      return res.status(400).json({ message: "Motivo obligatorio" });
     }
 
-    if (result.length === 0) {
+    // 1️⃣ Obtener empleado
+    const { data: empleado, error: selectError } = await supabase
+      .from("empleados")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (selectError) throw selectError;
+
+    if (!empleado) {
       return res.status(404).json({ message: "Empleado no encontrado" });
     }
 
-    const emp = result[0];
-
     // 2️⃣ Insertar en exempleados
-    const insertEx = `
-      INSERT INTO exempleados 
-      (nombre, documento, correo, telefono, cargo, departamento, fecha_ingreso, fecha_retiro, razon_despido)
-      VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), ?)
-    `;
+    const { error: insertError } = await supabase
+      .from("exempleados")
+      .insert([{
+        nombre: empleado.nombre,
+        documento: empleado.documento,
+        correo: empleado.correo,
+        telefono: empleado.telefono || null,
+        cargo: empleado.cargo,
+        departamento: empleado.departamento || null,
+        fecha_ingreso: empleado.fecha_ingreso,
+        fecha_retiro: new Date(),
+        razon_despido: motivo
+      }]);
 
-    db.query(
-      insertEx,
-      [
-        emp.nombre,
-        emp.documento,
-        emp.correo,
-        emp.telefono || null,
-        emp.cargo,
-        emp.departamento || null,
-        emp.fecha_ingreso,
-        motivo
-      ],
-      (err) => {
-        if (err) {
-          console.error("ERROR INSERT EX:", err);
-          return res.status(500).json(err);
-        }
+    if (insertError) throw insertError;
 
-        // 3️⃣ Eliminar de empleados
-        db.query("DELETE FROM empleados WHERE id=?", [id], (err) => {
-          if (err) {
-            console.error("ERROR DELETE:", err);
-            return res.status(500).json(err);
-          }
+    // 3️⃣ Eliminar de empleados
+    const { error: deleteError } = await supabase
+      .from("empleados")
+      .delete()
+      .eq("id", id);
 
-          res.json({
-            message: "Empleado movido a exempleados correctamente"
-          });
-        });
-      }
-    );
-  });
+    if (deleteError) throw deleteError;
+
+    res.json({
+      message: "Empleado movido a exempleados correctamente"
+    });
+
+  } catch (err) {
+    console.error("ERROR DELETE:", err);
+    res.status(500).json(err);
+  }
 };
 
 // 🔹 OBTENER EXEMPLEADOS
-export const getExEmpleados = (req, res) => {
-  db.query(
-    "SELECT * FROM exempleados ORDER BY fecha_retiro DESC",
-    (err, result) => {
-      if (err) {
-        console.error("ERROR GET EX:", err);
-        return res.status(500).json(err);
-      }
-      res.json(result);
-    }
-  );
+export const getExEmpleados = async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from("exempleados")
+      .select("*")
+      .order("fecha_retiro", { ascending: false });
+
+    if (error) throw error;
+
+    res.json(data);
+  } catch (err) {
+    console.error("ERROR GET EX:", err);
+    res.status(500).json(err);
+  }
 };
 
 // 🔥 ELIMINAR DEFINITIVAMENTE EXEMPLEADO
-export const deleteExEmpleado = (req, res) => {
-  const { id } = req.params;
+export const deleteExEmpleado = async (req, res) => {
+  try {
+    const { id } = req.params;
 
-  db.query("DELETE FROM exempleados WHERE id=?", [id], (err) => {
-    if (err) {
-      console.error("ERROR DELETE EX:", err);
-      return res.status(500).json(err);
-    }
+    const { error } = await supabase
+      .from("exempleados")
+      .delete()
+      .eq("id", id);
+
+    if (error) throw error;
 
     res.json({ message: "Exempleado eliminado definitivamente" });
-  });
+  } catch (err) {
+    console.error("ERROR DELETE EX:", err);
+    res.status(500).json(err);
+  }
 };
 
 // 🎂 EMPLEADOS QUE CUMPLEN AÑOS ESTE MES
-export const getCumpleaneros = (req, res) => {
-  const sql = `
-    SELECT id, nombre, fecha_nacimiento
-    FROM empleados
-    WHERE estado='activo'
-    AND MONTH(fecha_nacimiento) = MONTH(CURDATE())
-  `;
+export const getCumpleaneros = async (req, res) => {
+  try {
+    const currentMonth = new Date().getMonth() + 1;
 
-  db.query(sql, (err, result) => {
-    if (err) {
-      console.error("ERROR CUMPLEAÑOS:", err);
-      return res.status(500).json(err);
-    }
+    const { data, error } = await supabase
+      .from("empleados")
+      .select("id, nombre, fecha_nacimiento")
+      .eq("estado", "activo");
 
-    res.json(result);
-  });
+    if (error) throw error;
+
+    const filtrados = data.filter(emp => {
+      if (!emp.fecha_nacimiento) return false;
+      const mes = new Date(emp.fecha_nacimiento).getMonth() + 1;
+      return mes === currentMonth;
+    });
+
+    res.json(filtrados);
+
+  } catch (err) {
+    console.error("ERROR CUMPLEAÑOS:", err);
+    res.status(500).json(err);
+  }
 };
 
 // 🔍 BUSCAR EMPLEADO POR NOMBRE
-export const searchEmpleado = (req, res) => {
-  const { q } = req.query;
+export const searchEmpleado = async (req, res) => {
+  try {
+    const { q } = req.query;
 
-  const sql = `
-    SELECT id, nombre, cargo, departamento 
-    FROM empleados 
-    WHERE nombre LIKE ?
-    LIMIT 5
-  `;
+    const { data, error } = await supabase
+      .from("empleados")
+      .select("id, nombre, cargo, departamento")
+      .ilike("nombre", `%${q}%`)
+      .limit(5);
 
-  db.query(sql, [`%${q}%`], (err, result) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).json(err);
-    }
+    if (error) throw error;
 
-    res.json(result);
-  });
+    res.json(data);
+  } catch (err) {
+    console.error("ERROR SEARCH:", err);
+    res.status(500).json(err);
+  }
 };
 
 // 🔹 OBTENER EMPLEADO POR ID
-export const getEmpleadoById = (req, res) => {
-  const { id } = req.params; // ID que viene de la URL
+export const getEmpleadoById = async (req, res) => {
+  try {
+    const { id } = req.params;
 
-  db.query("SELECT * FROM empleados WHERE id=?", [id], (err, result) => {
-    if (err) {
-      console.error("ERROR GET BY ID:", err);
-      return res.status(500).json(err);
-    }
+    const { data, error } = await supabase
+      .from("empleados")
+      .select("*")
+      .eq("id", id)
+      .single();
 
-    if (result.length === 0) {
+    if (error) throw error;
+
+    if (!data) {
       return res.status(404).json({ message: "Empleado no encontrado" });
     }
 
-    res.json(result[0]); // retornamos un solo empleado
-  });
+    res.json(data);
+  } catch (err) {
+    console.error("ERROR GET BY ID:", err);
+    res.status(500).json(err);
+  }
 };
 
 // 🔹 OBTENER DATOS PARA CERTIFICADO
-export const getCertificadoEmpleado = (req, res) => {
-  const { id } = req.params;
+export const getCertificadoEmpleado = async (req, res) => {
+  try {
+    const { id } = req.params;
 
-  const sql = `
-    SELECT nombre, cargo, salario, fecha_ingreso
-    FROM empleados
-    WHERE id = ?
-  `;
+    const { data, error } = await supabase
+      .from("empleados")
+      .select("nombre, cargo, salario, fecha_ingreso")
+      .eq("id", id)
+      .single();
 
-  db.query(sql, [id], (err, result) => {
-    if (err) {
-      console.error("ERROR CERTIFICADO:", err);
-      return res.status(500).json(err);
-    }
+    if (error) throw error;
 
-    if (result.length === 0) {
+    if (!data) {
       return res.status(404).json({ message: "Empleado no encontrado" });
     }
 
-    res.json(result[0]);
-  });
+    res.json(data);
+  } catch (err) {
+    console.error("ERROR CERTIFICADO:", err);
+    res.status(500).json(err);
+  }
 };
