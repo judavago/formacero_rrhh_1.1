@@ -106,18 +106,29 @@ function InformacionEmpleados() {
     }
 
     try {
-      await fetchWithAuth(`/empleados/${id}`, {
+      const res = await fetchWithAuth(`/empleados/${id}`, {
         method: "DELETE",
         body: JSON.stringify({ motivo })
       });
 
-      alert("Empleado eliminado correctamente ✅");
+      const text = await res.text();
+      let data = {};
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch (parseError) {
+        console.warn("Delete response no es JSON:", parseError, text);
+      }
 
-      setEmployees((prev) => prev.filter(emp => emp.id !== id));
+      if (!res.ok) {
+        throw new Error(data.message || text || "Error al eliminar empleado");
+      }
+
+      await getEmployees();
+      alert(data.message || "Empleado eliminado correctamente ✅");
 
     } catch (error) {
       console.error("Error eliminando:", error);
-      alert("Error al eliminar ❌");
+      alert(error.message || "Error al eliminar ❌");
     }
   };
 

@@ -207,7 +207,17 @@ export const deleteEmpleado = async (req, res) => {
       throw insertError;
     }
 
-    // 3️⃣ Eliminar de empleados
+    // 3️⃣ Eliminar usuario asociado primero para evitar restricción de FK
+    const { error: userDeleteError } = await supabase
+      .from("usuarios")
+      .delete()
+      .eq("empleado_id", id);
+
+    if (userDeleteError && userDeleteError.code !== "PGRST205") {
+      throw userDeleteError;
+    }
+
+    // 4️⃣ Eliminar de empleados
     const { error: deleteError } = await supabase
       .from("empleados")
       .delete()
