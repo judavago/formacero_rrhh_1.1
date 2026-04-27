@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { fetchWithAuth } from "../../utils/api";
 import "./reportes.css";
 
@@ -13,12 +13,18 @@ function Reportes() {
   const [editDecision, setEditDecision] = useState("");
   const [editEstado, setEditEstado] = useState("pendiente");
   const [loading, setLoading] = useState(false);
+  const [searchParams] = useSearchParams();
 
   // 🔐 OBTENER REPORTES DESDE BACKEND
   useEffect(() => {
     cargarEmpleados();
     fetchReportes();
-  }, []);
+
+    const tabParam = searchParams.get("tab");
+    if (tabParam === "reportes") {
+      setActiveTab("reportes");
+    }
+  }, [searchParams]);
 
   async function fetchReportes() {
     setLoading(true);
