@@ -17,6 +17,10 @@ import EmpleadoDetalle from "./pages/empleado-detalle/empleado-detalle.jsx";
 // 🔹 IMPORT LOGIN (NUEVO)
 import Login from "./pages/login/login.jsx";
 
+// 🔹 IMPORT FORGOT PASSWORD
+import ForgotPassword from "./pages/forgot-password/forgot-password.jsx";
+import ResetPassword from "./pages/reset-password/reset-password.jsx";
+
 import './layout.css';
 
 const RequireAuth = ({ children }) => {
@@ -32,7 +36,11 @@ function App() {
         {/* 🔥 LOGIN COMO PANTALLA INICIAL */}
         <Route path="/" element={<Login />} />
 
-        {/* 🔥 DASHBOARD */}
+        {/* � FORGOT PASSWORD */}
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+
+        {/* �🔥 DASHBOARD */}
         <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
 
         {/* 🔹 RESTO DEL SISTEMA */}

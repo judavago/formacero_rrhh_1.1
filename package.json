@@ -1,13 +1,12 @@
 {
   "type": "module",
   "dependencies": {
-    "concurrently": "^9.2.1"
+    "concurrently": "^9.2.1",
+    "nodemailer": "^8.0.7"
   },
-  
-    "scripts": {
-      "dev": "node dev.js",
-      "dev:backend": "cd backend && exec node server.js",
-      "dev:frontend": "cd formacero_rrhh_1.1 && exec npm run dev"
-    }
-  
+  "scripts": {
+    "dev": "node dev.js",
+    "dev:backend": "cd backend && exec node server.js",
+    "dev:frontend": "cd formacero_rrhh_1.1 && exec npm run dev"
+  }
 }

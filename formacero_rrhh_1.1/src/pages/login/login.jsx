@@ -114,6 +114,12 @@ function Login() {
 
         <button type="submit">Ingresar</button>
 
+        <p style={{ marginTop: "10px" }}>
+          <a href="/forgot-password" style={{ color: "#007bff", textDecoration: "none" }}>
+            ¿Olvidaste tu contraseña?
+          </a>
+        </p>
+
       </form>
 
     </div>
