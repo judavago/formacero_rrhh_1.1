@@ -4,16 +4,31 @@ import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import nodemailer from "nodemailer";
 
-// Configuración de Nodemailer
+const smtpPort = Number(process.env.EMAIL_PORT) || 465;
+const smtpSecure = process.env.EMAIL_SECURE
+  ? process.env.EMAIL_SECURE === "true"
+  : smtpPort === 465;
+const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+
+// Configuración de Nodemailer (STARTTLS en 587, SSL en 465)
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_HOST || "smtp.gmail.com",
-  port: Number(process.env.EMAIL_PORT) || 465,
-  secure: true,
+  port: smtpPort,
+  secure: smtpSecure,
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
 });
+
+const hasValidEmailConfig = () => {
+  return Boolean(
+    process.env.EMAIL_USER &&
+      process.env.EMAIL_PASS &&
+      process.env.EMAIL_FROM &&
+      !process.env.EMAIL_USER.includes("tu-usuario@")
+  );
+};
 
 export const login = async (req, res) => {
 
@@ -110,21 +125,52 @@ export const login = async (req, res) => {
 };
 
 export const forgotPassword = async (req, res) => {
-  const { correo } = req.body;
+  const correo = (req.body?.correo || "").trim().toLowerCase();
   if (!correo) {
     return res.status(400).json({ message: "Correo es obligatorio" });
   }
 
+  if (!hasValidEmailConfig()) {
+    return res.status(500).json({
+      message: "Falta configurar el servicio de correo en el backend",
+    });
+  }
+
   try {
-    // Buscar usuario por correo
-    const { data: user, error } = await supabase
+    // 1) Buscar usuario por correo en tabla usuarios
+    const { data: userByCorreo, error: userByCorreoError } = await supabase
       .from("usuarios")
       .select("id, correo")
       .eq("correo", correo)
       .single();
 
-    if (error || !user) {
-      return res.status(404).json({ message: "Usuario no encontrado" });
+    let user = userByCorreo;
+
+    // 2) Si no está en usuarios, buscar por correo del empleado y luego resolver usuario por empleado_id
+    if (userByCorreoError || !userByCorreo) {
+      const { data: empleado, error: empleadoError } = await supabase
+        .from("empleados")
+        .select("id, correo")
+        .eq("correo", correo)
+        .single();
+
+      if (!empleadoError && empleado) {
+        const { data: userByEmpleado, error: userByEmpleadoError } = await supabase
+          .from("usuarios")
+          .select("id, correo")
+          .eq("empleado_id", empleado.id)
+          .single();
+
+        if (!userByEmpleadoError && userByEmpleado) {
+          user = userByEmpleado;
+        }
+      }
+    }
+
+    if (!user) {
+      return res.status(404).json({
+        message: "No existe una cuenta de acceso asociada a ese correo",
+      });
     }
 
     // Generar token único y expiración (1 hora)
@@ -143,7 +189,7 @@ export const forgotPassword = async (req, res) => {
     }
 
     // Enviar email
-    const resetUrl = `${process.env.FRONTEND_URL || "http://localhost:5173"}/reset-password?token=${resetToken}`;
+    const resetUrl = `${frontendUrl}/reset-password?token=${resetToken}`;
     const mailOptions = {
       from: process.env.EMAIL_FROM,
       to: correo,
@@ -163,6 +209,12 @@ export const resetPassword = async (req, res) => {
   const { token, newPassword } = req.body;
   if (!token || !newPassword) {
     return res.status(400).json({ message: "Token y nueva contraseña son obligatorios" });
+  }
+
+  if (newPassword.length < 8) {
+    return res.status(400).json({
+      message: "La nueva contraseña debe tener al menos 8 caracteres",
+    });
   }
 
   try {

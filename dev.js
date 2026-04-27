@@ -5,6 +5,9 @@ import { fileURLToPath } from "node:url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const backendDir = path.join(__dirname, "backend");
 const frontendDir = path.join(__dirname, "formacero_rrhh_1.1");
+const isWindows = process.platform === "win32";
+const npmCommand = isWindows ? "npm" : "npm";
+const nodeCommand = process.execPath;
 
 const children = [];
 const exitAll = (code = 0) => {
@@ -19,7 +22,8 @@ const exitAll = (code = 0) => {
 const spawnChild = (name, command, args, cwd) => {
   const child = spawn(command, args, {
     cwd,
-    stdio: "inherit"
+    stdio: "inherit",
+    shell: isWindows
   });
 
   children.push(child);
@@ -48,8 +52,8 @@ const spawnChild = (name, command, args, cwd) => {
   return child;
 };
 
-spawnChild("BACK", "node", ["server.js"], backendDir);
-spawnChild("FRONT", "npm", ["run", "dev"], frontendDir);
+spawnChild("BACK", nodeCommand, ["server.js"], backendDir);
+spawnChild("FRONT", npmCommand, ["run", "dev"], frontendDir);
 
 process.on("SIGINT", () => exitAll(0));
 process.on("SIGTERM", () => exitAll(0));
