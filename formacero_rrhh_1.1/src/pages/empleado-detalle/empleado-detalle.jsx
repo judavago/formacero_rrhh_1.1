@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, Link, useNavigate, useSearchParams } from "react-router-dom";
 import { fetchWithAuth } from "../../utils/api";
 import "../../layout.css";
 import "./empleado-detalle.css";
@@ -8,6 +8,7 @@ function EmpleadoDetalle() {
 
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [empleado, setEmpleado] = useState(null);
   const [activeSection, setActiveSection] = useState("info");
   const [reportes, setReportes] = useState([]);
@@ -69,6 +70,14 @@ function EmpleadoDetalle() {
     fetchReportes();
 
   }, [id, token, navigate, canViewAssignedReports, currentEmployeeId]);
+
+  // Handle tab parameter from URL
+  useEffect(() => {
+    const tabParam = searchParams.get("tab");
+    if (tabParam === "reportes") {
+      setActiveSection("reportes");
+    }
+  }, [searchParams]);
 
   const formatFecha = (fecha) => {
     if (!fecha) return "-";
