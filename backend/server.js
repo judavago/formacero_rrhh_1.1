@@ -40,6 +40,10 @@ app.use(cors(corsOptions));
 // 🔹 MIDDLEWARES
 app.use(express.json());
 
+// 🔹 SERVIR ARCHIVOS ESTÁTICOS (uploads)
+app.use('/uploads', express.static('uploads'));
+app.use('/api/uploads', express.static('uploads'));
+
 // 🔹 LOG (DEBUG)
 app.use((req, res, next) => {
   console.log(`📡 ${req.method} ${req.url}`);

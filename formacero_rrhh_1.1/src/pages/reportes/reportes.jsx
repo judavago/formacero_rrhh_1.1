@@ -242,6 +242,32 @@ function Reportes() {
                   <div className="fecha">{rep.fecha}</div>
                   <div className="descripcion">{rep.descripcion}</div>
                   <div className="decision"><strong>Decisión:</strong> {rep.decision || "Sin decisión"}</div>
+                  
+                  {rep.respuesta_empleado ? (
+                    <div className="respuesta-empleado">
+                      <div className="respuesta-fecha">
+                        Respondido el {rep.fecha_respuesta}
+                      </div>
+                      <div className="respuesta-contenido">
+                        {rep.respuesta_empleado}
+                      </div>
+                      {rep.archivo_excusa && (
+                        <a 
+                          href={`/api/uploads/${rep.archivo_excusa}`} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="archivo-excusa"
+                        >
+                          Ver archivo adjunto
+                        </a>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="sin-respuesta">
+                      El empleado aún no ha respondido
+                    </div>
+                  )}
+                  
                   <div className="acciones-reporte">
                     <button
                       className={rep.estado === "resuelto" ? "btn-resuelto" : "btn-pendiente"}

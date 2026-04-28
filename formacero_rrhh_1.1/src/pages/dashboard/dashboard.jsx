@@ -345,7 +345,10 @@ function Dashboard() {
           </div>
         </div>
 
-        <Link to="/reportes?tab=reportes" className="card alert card-link">
+        <Link
+          to={user?.rol === "admin" ? "/reportes?tab=reportes" : `/empleado/${user?.id}?tab=reportes`}
+          className="card alert card-link"
+        >
           <h3>Alertas Pendientes</h3>
           <p>{pendingDecisionCount}</p>
         </Link>
