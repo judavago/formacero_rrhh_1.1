@@ -5,11 +5,14 @@ import { requireAdmin } from "../middlewares/roleAuth.js";
 
 const router = express.Router();
 
-// Aplicar middlewares a todas las rutas
+// Aplicar middleware de autenticación a todas las rutas
 router.use(verifyToken);
-router.use(requireAdmin);
 
+// GET puede ser accedido por usuarios autenticados
 router.get("/", getReportes);
+
+// Crear, actualizar y eliminar requieren admin
+router.use(requireAdmin);
 router.post("/", crearReporte);
 router.put("/:id", updateReporte);
 router.delete("/:id", deleteReporte);

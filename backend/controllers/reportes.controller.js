@@ -15,10 +15,18 @@ export const crearReporte = (req, res) => {
 };
 
 export const getReportes = (req, res) => {
-  console.log("GET /reportes called");
-  const sql = "SELECT * FROM reportes";
+  console.log("GET /reportes called", req.user);
 
-  db.query(sql, (err, data) => {
+  let sql = "SELECT * FROM reportes";
+  const params = [];
+
+  if (req.user?.rol !== "admin") {
+    const empleadoId = req.user?.empleado_id || req.user?.id;
+    sql += " WHERE empleado_id = ?";
+    params.push(empleadoId);
+  }
+
+  db.query(sql, params, (err, data) => {
     console.log("Data from db:", data);
     if (err) return res.status(500).json(err);
     res.json(data);

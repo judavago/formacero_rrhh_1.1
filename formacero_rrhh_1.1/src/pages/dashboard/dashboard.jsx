@@ -101,6 +101,8 @@ function Dashboard() {
     }
   };
 
+  const pendingDecisionCount = reportes.filter(reporte => reporte.estado === "pendiente").length;
+
   const handleCreateReporte = async (e) => {
     e.preventDefault();
     try {
@@ -207,9 +209,9 @@ function Dashboard() {
     getTotal();
     getCumpleaneros();
 
+    fetchReportes();
     if (user?.rol === "admin") {
       fetchEmpleados();
-      fetchReportes();
     }
 
   }, [token, navigate]);
@@ -347,10 +349,13 @@ function Dashboard() {
           </div>
         </div>
 
-        <div className="card alert">
+        <Link
+          to={user?.rol === "admin" ? "/reportes?tab=reportes" : `/empleado/${user?.id}?tab=reportes`}
+          className="card alert card-link"
+        >
           <h3>Alertas Pendientes</h3>
-          <p>3</p>
-        </div>
+          <p>{pendingDecisionCount}</p>
+        </Link>
 
       </main>
 
