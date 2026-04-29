@@ -24,6 +24,8 @@ function EmpleadoDetalle() {
 
   // ✅ TOKEN
   const token = localStorage.getItem("token");
+  const user = JSON.parse(localStorage.getItem("user") || "null");
+  const allowedEmployeeId = String(user?.empleado_id || user?.id || "");
 
   const fetchReportes = async () => {
     if (!canViewAssignedReports) return;
@@ -54,6 +56,11 @@ function EmpleadoDetalle() {
       return;
     }
 
+    if (user?.rol === "empleado" && String(id) !== allowedEmployeeId) {
+      navigate(`/empleado/${allowedEmployeeId}`);
+      return;
+    }
+
     const getEmpleado = async () => {
       try {
         const res = await fetchWithAuth(`/empleados/${id}`);
@@ -65,6 +72,27 @@ function EmpleadoDetalle() {
 
       } catch (error) {
         console.error(error);
+      }
+    };
+
+    const fetchReportes = async () => {
+      if (!canViewAssignedReports) return;
+      setLoadingReportes(true);
+      try {
+        const res = await fetchWithAuth("/reportes");
+        const data = await res.json();
+        if (!res.ok || !Array.isArray(data)) {
+          setReportes([]);
+          return;
+        }
+
+        const filtered = data.filter((reporte) => String(reporte.empleado_id) === String(currentEmployeeId));
+        setReportes(filtered);
+      } catch (error) {
+        console.error("Error cargando reportes:", error);
+        setReportes([]);
+      } finally {
+        setLoadingReportes(false);
       }
     };
 
@@ -169,6 +197,27 @@ function EmpleadoDetalle() {
             </div>
 
             <div className="info-grid">
+
+              <p><strong>Cédula:</strong> {empleado.documento}</p>
+              <p><strong>Correo:</strong> {empleado.correo}</p>
+              <p><strong>Departamento:</strong> {empleado.departamento || "Sin asignar"}</p>
+              <p><strong>Salario:</strong> ${empleado.salario}</p>
+
+              <p><strong>Ingreso:</strong> {formatFecha(empleado.fecha_ingreso)}</p>
+              <p><strong>Nacimiento:</strong> {formatFecha(empleado.fecha_nacimiento)}</p>
+
+              <p>
+                <strong>Estado:</strong>{" "}
+                <span className={empleado.estado === "activo" ? "active" : "inactive"}>
+                  {empleado.estado}
+                </span>
+              </p>
+
+            </div>
+
+          </div>
+        )}
+
 
               <p><strong>Cédula:</strong> {empleado.documento}</p>
               <p><strong>Correo:</strong> {empleado.correo}</p>

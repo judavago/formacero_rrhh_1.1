@@ -108,13 +108,13 @@ function RegistrarEmpleados() {
 ✅ Empleado registrado correctamente
 
 🔐 Credenciales de acceso:
-Usuario: ${data.credenciales?.username || "N/A"}
+Correo: ${data.credenciales?.correo || "N/A"}
 Contraseña: ${data.credenciales?.password || "N/A"}
 `);
 
     } catch (error) {
       console.error("Error:", error);
-      alert("❌ Error al registrar empleado");
+      alert(`❌ Error al registrar empleado: ${error.message || "Revise los datos e intente de nuevo."}`);
     }
   }
 

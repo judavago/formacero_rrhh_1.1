@@ -219,6 +219,69 @@ body{
 }
 
 /* ==================================================
+   RESPONSIVE MOBILE
+================================================== */
+
+@media (max-width: 1024px) {
+  .header {
+    padding: 0 20px;
+    min-height: auto;
+  }
+
+  .hero {
+    padding: 32px 24px;
+  }
+
+  .search-bar input {
+    width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .logo {
+    font-size: 1.2rem;
+  }
+
+  .hero {
+    padding: 28px 18px;
+  }
+
+  .hero h1 {
+    font-size: 32px;
+  }
+
+  .hero p {
+    font-size: 16px;
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 540px) {
+  .header {
+    padding: 16px 14px;
+  }
+
+  .search-bar input {
+    font-size: 14px;
+  }
+
+  .hero {
+    padding: 24px 14px;
+  }
+
+  .hero h1 {
+    font-size: 28px;
+  }
+}
+
+/* ==================================================
    7️⃣ FOOTER GLOBAL
 ================================================== */
 

@@ -79,14 +79,51 @@ export const createEmpleado = async (req, res) => {
       return res.status(400).json({ message: "Faltan campos obligatorios" });
     }
 
+    const correoNormalizado = correo.trim().toLowerCase();
+    const cedulaNormalizada = String(cedula).trim();
+
+    const { data: existingEmpleado, error: empleadoExistsError } = await supabase
+      .from("empleados")
+      .select("id")
+      .eq("correo", correoNormalizado)
+      .limit(1)
+      .single();
+
+    if (empleadoExistsError && empleadoExistsError.code !== "PGRST116") {
+      throw empleadoExistsError;
+    }
+
+    if (existingEmpleado) {
+      return res.status(409).json({
+        message: "El correo ya está registrado para otro empleado. Usa un correo diferente."
+      });
+    }
+
+    const { data: existingUsuario, error: usuarioExistsError } = await supabase
+      .from("usuarios")
+      .select("id")
+      .eq("correo", correoNormalizado)
+      .limit(1)
+      .single();
+
+    if (usuarioExistsError && usuarioExistsError.code !== "PGRST116") {
+      throw usuarioExistsError;
+    }
+
+    if (existingUsuario) {
+      return res.status(409).json({
+        message: "El correo ya está registrado para otro usuario. Usa un correo diferente."
+      });
+    }
+
     const departamentoId = departamento
       ? await findOrCreateDepartamentoId(departamento)
       : null;
 
     const empleadoPayload = {
       nombre,
-      documento: cedula,
-      correo,
+      documento: cedulaNormalizada,
+      correo: correoNormalizado,
       salario: salario || null,
       fecha_ingreso: fechaIngreso || null,
       fecha_nacimiento: fechaNacimiento || null,
@@ -100,31 +137,48 @@ export const createEmpleado = async (req, res) => {
       .insert([empleadoPayload])
       .select();
 
-    if (empError) throw empError;
+    if (empError) {
+      if (empError.code === "23505") {
+        return res.status(409).json({
+          message: "El correo ya existe en la base de datos. Usa un correo diferente."
+        });
+      }
+      throw empError;
+    }
 
     const empleadoId = empleadoData[0].id;
 
     // 2️⃣ Crear usuario
-    const defaultPassword = cedula;
+    const defaultPassword = cedulaNormalizada;
     const hashedPassword = await bcrypt.hash(defaultPassword, 10);
 
     const { error: userError } = await supabase
       .from("usuarios")
       .insert([{
         nombre,
-        correo,
+        correo: correoNormalizado,
         password: hashedPassword,
         rol: "empleado",
-        empleado_id: empleadoId,
-        username: cedula
+        empleado_id: empleadoId
       }]);
 
-    if (userError) throw userError;
+    if (userError) {
+      // Evita dejar empleado sin credenciales si falla la creación del usuario.
+      await supabase.from("empleados").delete().eq("id", empleadoId);
+
+      if (userError.code === "23505") {
+        return res.status(409).json({
+          message: "El correo ya existe para otro usuario. Usa un correo diferente."
+        });
+      }
+
+      throw userError;
+    }
 
     res.json({
       message: "Empleado y usuario creados",
       credenciales: {
-        username: cedula,
+        correo: correoNormalizado,
         password: defaultPassword
       }
     });

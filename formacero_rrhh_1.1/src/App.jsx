@@ -3,7 +3,6 @@ import {
   Dashboard,
   RegistrarEmpleados,
   Nomina,
-  Vacaciones,
   Reportes,
   Organizacion,
   InformacionEmpleados,
@@ -28,6 +27,15 @@ const RequireAuth = ({ children }) => {
   return token ? children : <Navigate to="/" replace />;
 };
 
+const RequireAdmin = ({ children }) => {
+  const token = localStorage.getItem("token");
+  const user = JSON.parse(localStorage.getItem("user") || "null");
+  if (!token || user?.rol !== "admin") {
+    return <Navigate to="/dashboard" replace />;
+  }
+  return children;
+};
+
 function App() {
   return (
     <Router>
@@ -44,13 +52,12 @@ function App() {
         <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
 
         {/* 🔹 RESTO DEL SISTEMA */}
-        <Route path="/registrar-empleados" element={<RequireAuth><RegistrarEmpleados /></RequireAuth>} />
-        <Route path="/nomina" element={<RequireAuth><Nomina /></RequireAuth>} />
-        <Route path="/vacaciones" element={<RequireAuth><Vacaciones /></RequireAuth>} />
-        <Route path="/reportes" element={<RequireAuth><Reportes /></RequireAuth>} />
+        <Route path="/registrar-empleados" element={<RequireAuth><RequireAdmin><RegistrarEmpleados /></RequireAdmin></RequireAuth>} />
+        <Route path="/nomina" element={<RequireAuth><RequireAdmin><Nomina /></RequireAdmin></RequireAuth>} />
+        <Route path="/reportes" element={<RequireAuth><RequireAdmin><Reportes /></RequireAdmin></RequireAuth>} />
         <Route path="/organizacion" element={<RequireAuth><Organizacion /></RequireAuth>} />
-        <Route path="/informacion-empleados" element={<RequireAuth><InformacionEmpleados /></RequireAuth>} />
-        <Route path="/lista-exempleados" element={<RequireAuth><ListaExempleados /></RequireAuth>} />
+        <Route path="/informacion-empleados" element={<RequireAuth><RequireAdmin><InformacionEmpleados /></RequireAdmin></RequireAuth>} />
+        <Route path="/lista-exempleados" element={<RequireAuth><RequireAdmin><ListaExempleados /></RequireAdmin></RequireAuth>} />
         <Route path="/certificado-laboral" element={<RequireAuth><CertificadoLaboral /></RequireAuth>} />
 
         {/* 🔹 DETALLE EMPLEADO */}

@@ -294,14 +294,23 @@ function Dashboard() {
 
       {/* MENÚ */}
       <nav className="main-menu">
-        <Link to="/organizacion" className="menu-btn">Organización</Link>
-        <Link to="/informacion-empleados" className="menu-btn">Empleados</Link>
-        <Link to="/lista-exempleados" className="menu-btn">Lista Exempleados</Link>
-        <Link to="/nomina" className="menu-btn">Nómina</Link>
-        <Link to="/registrar-empleados" className="menu-btn">Registro de Empleados</Link>
-        <Link to="/certificado-laboral" className="menu-btn">Certificado Laboral</Link>
-        <Link to="/vacaciones" className="menu-btn">Vacaciones</Link>
-        {user?.rol === "admin" && <Link to="/reportes" className="menu-btn">Reportes</Link>}
+        {user?.rol === "admin" ? (
+          <>
+            <Link to="/organizacion" className="menu-btn">Organización</Link>
+            <Link to="/informacion-empleados" className="menu-btn">Empleados</Link>
+            <Link to="/lista-exempleados" className="menu-btn">Lista Exempleados</Link>
+            <Link to="/nomina" className="menu-btn">Nómina</Link>
+            <Link to="/registrar-empleados" className="menu-btn">Registro de Empleados</Link>
+            <Link to="/certificado-laboral" className="menu-btn">Certificado Laboral</Link>
+            <Link to="/reportes" className="menu-btn">Reportes</Link>
+          </>
+        ) : (
+          <>
+            <Link to="/organizacion" className="menu-btn">Organización</Link>
+            <Link to={`/empleado/${user?.empleado_id || user?.id}`} className="menu-btn">Mi Perfil</Link>
+            <Link to="/certificado-laboral" className="menu-btn">Certificado Laboral</Link>
+          </>
+        )}
       </nav>
 
       {/* CONTENIDO */}
@@ -315,11 +324,6 @@ function Dashboard() {
         <div className="card">
           <h3>Nuevas Contrataciones</h3>
           <p>8</p>
-        </div>
-
-        <div className="card">
-          <h3>Vacaciones Activas</h3>
-          <p>12</p>
         </div>
 
         <div className="card">

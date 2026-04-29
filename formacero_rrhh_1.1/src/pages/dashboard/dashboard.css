@@ -266,6 +266,86 @@
     color: #ffffff;
 }
 
+/* ==================================================
+   RESPONSIVE MOBILE
+================================================== */
+
+@media (max-width: 1024px) {
+  .main-menu {
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .menu-btn {
+    flex: 1 1 calc(50% - 10px);
+    text-align: center;
+  }
+
+  .dashboard-content {
+    padding: 18px 20px;
+  }
+
+  .search-bar input {
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 720px) {
+  .header {
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 16px;
+  }
+
+  .user-profile {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .dashboard-content {
+    grid-template-columns: 1fr;
+    padding: 16px;
+  }
+
+  .menu-btn {
+    flex: 1 1 100%;
+  }
+
+  .hero {
+    padding: 30px 18px;
+  }
+
+  .card,
+  .search-bar {
+    width: 100%;
+  }
+}
+
+@media (max-width: 540px) {
+  .header {
+    padding: 14px 12px;
+  }
+
+  .logo {
+    font-size: 1.1rem;
+  }
+
+  .menu-btn {
+    font-size: 13px;
+    padding: 10px 14px;
+  }
+
+  .card h3 {
+    font-size: 17px;
+  }
+
+  .card p {
+    font-size: 30px;
+  }
+}
+
 .logout-btn:active {
   transform: scale(0.95);
 }
