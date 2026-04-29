@@ -12,12 +12,15 @@ const buildApiUrl = () => {
 
 export const API = buildApiUrl();
 
-export const getAuthHeaders = (customHeaders = {}) => {
+export const getAuthHeaders = (customHeaders = {}, omitContentType = false) => {
   const token = localStorage.getItem("token");
   const headers = {
-    "Content-Type": "application/json",
     ...customHeaders
   };
+
+  if (!omitContentType && headers["Content-Type"] === undefined) {
+    headers["Content-Type"] = "application/json";
+  }
 
   if (token) {
     headers.Authorization = `Bearer ${token}`;
@@ -27,10 +30,11 @@ export const getAuthHeaders = (customHeaders = {}) => {
 };
 
 export const fetchWithAuth = async (endpoint, options = {}) => {
+  const omitContentType = options.body instanceof FormData;
   return fetch(`${API}${endpoint}`, {
     ...options,
     headers: {
-      ...getAuthHeaders(options.headers)
+      ...getAuthHeaders(options.headers, omitContentType)
     }
   });
 };

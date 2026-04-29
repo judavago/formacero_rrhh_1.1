@@ -109,15 +109,37 @@ export const db = {
 
       // 🔥 UPDATE reportes
       else if (sql.includes("UPDATE reportes")) {
-        const [estado, decision, id] = params;
+        if (sql.includes("SET respuesta_empleado = ?") && sql.includes("archivo_excusa = ?")) {
+          const [respuesta_empleado, archivo_excusa, id] = params;
 
-        const res = await supabase
-          .from("reportes")
-          .update({ estado, decision })
-          .eq("id", id);
+          const res = await supabase
+            .from("reportes")
+            .update({ respuesta_empleado, archivo_excusa, fecha_respuesta: new Date() })
+            .eq("id", id);
 
-        data = res.data;
-        error = res.error;
+          data = res.data;
+          error = res.error;
+        } else if (sql.includes("SET estado = ?") && sql.includes("decision = ?") && sql.includes("respuesta_empleado = ?")) {
+          const [estado, decision, respuesta_empleado, id] = params;
+
+          const res = await supabase
+            .from("reportes")
+            .update({ estado, decision, respuesta_empleado })
+            .eq("id", id);
+
+          data = res.data;
+          error = res.error;
+        } else {
+          const [estado, decision, id] = params;
+
+          const res = await supabase
+            .from("reportes")
+            .update({ estado, decision })
+            .eq("id", id);
+
+          data = res.data;
+          error = res.error;
+        }
       }
 
       // 🔥 DELETE reportes

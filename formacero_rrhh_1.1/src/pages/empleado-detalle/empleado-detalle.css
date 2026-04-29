@@ -129,6 +129,89 @@
   color: #333;
 }
 
+.respuesta-empleado {
+  background: #f0f9ff;
+  padding: 12px;
+  border-radius: 8px;
+  margin-top: 10px;
+  border-left: 3px solid #0ea5e9;
+}
+
+.respuesta-actions {
+  margin-top: 15px;
+}
+
+.btn-responder {
+  background: #0ea5e9;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.2s ease;
+}
+
+.btn-responder:hover {
+  background: #0284c7;
+}
+
+.respuesta-form {
+  background: #f8fafc;
+  padding: 15px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  margin-top: 10px;
+}
+
+.respuesta-form textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 80px;
+}
+
+.respuesta-form input[type="file"] {
+  margin-bottom: 10px;
+}
+
+.form-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.form-actions button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.2s ease;
+}
+
+.form-actions button:first-child {
+  background: #10b981;
+  color: white;
+}
+
+.form-actions button:first-child:hover {
+  background: #059669;
+}
+
+.form-actions button:last-child {
+  background: #6b7280;
+  color: white;
+}
+
+.form-actions button:last-child:hover {
+  background: #4b5563;
+}
+
 .loading-message,
 .empty-message {
   text-align: center;

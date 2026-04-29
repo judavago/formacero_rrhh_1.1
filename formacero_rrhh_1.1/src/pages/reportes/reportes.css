@@ -283,3 +283,60 @@ h2 {
 .crear-reporte button:hover {
     background-color: #1e3a6e;
 }
+
+/* =========================
+   RESPUESTAS DE EMPLEADOS
+========================= */
+
+.respuesta-empleado {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 16px;
+    margin-top: 16px;
+    border-left: 4px solid #10b981;
+}
+
+.respuesta-contenido {
+    margin-bottom: 12px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #374151;
+}
+
+.respuesta-fecha {
+    font-size: 12px;
+    color: #6b7280;
+    margin-bottom: 8px;
+}
+
+.archivo-excusa {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #dbeafe;
+    color: #1e40af;
+    padding: 8px 12px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    transition: background-color 0.2s ease;
+}
+
+.archivo-excusa:hover {
+    background: #bfdbfe;
+    color: #1d4ed8;
+}
+
+.archivo-excusa::before {
+    content: "📎";
+    font-size: 14px;
+}
+
+.sin-respuesta {
+    color: #6b7280;
+    font-style: italic;
+    font-size: 14px;
+    margin-top: 16px;
+}
