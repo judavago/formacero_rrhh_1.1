@@ -16,17 +16,34 @@ function RegistrarEmpleados() {
     fechaIngreso: "",
     fechaNacimiento: "",
     departamento: "",
-    foto: null
+    foto: null,
+    contactoEmergencia: {
+      nombre: "",
+      relacion: "",
+      telefonoPrincipal: "",
+      telefonoAlternativo: "",
+      direccion: "",
+      ciudad: ""
+    }
   });
 
   const [preview, setPreview] = useState(null);
   const [documentos, setDocumentos] = useState([]);
 
   function handleChange(e){
-    setForm({
-      ...form,
-      [e.target.id]: e.target.value
-    });
+    const { name, value } = e.target;
+    const keys = name.split('.');
+    if (keys.length === 1) {
+      setForm({ ...form, [name]: value });
+    } else {
+      setForm({
+        ...form,
+        [keys[0]]: {
+          ...form[keys[0]],
+          [keys[1]]: value
+        }
+      });
+    }
   }
 
   function handleFoto(e){
@@ -62,7 +79,8 @@ function RegistrarEmpleados() {
         salario: form.salario,
         fechaIngreso: form.fechaIngreso,
         fechaNacimiento: form.fechaNacimiento,
-        departamento: form.departamento
+        departamento: form.departamento,
+        contactoEmergencia: form.contactoEmergencia
       };
 
       // 🔐 TOKEN AGREGADO
@@ -98,7 +116,15 @@ function RegistrarEmpleados() {
         fechaIngreso:"",
         fechaNacimiento:"",
         departamento: "",
-        foto:null
+        foto:null,
+        contactoEmergencia: {
+          nombre: "",
+          relacion: "",
+          telefonoPrincipal: "",
+          telefonoAlternativo: "",
+          direccion: "",
+          ciudad: ""
+        }
       });
 
       setPreview(null);
@@ -147,44 +173,87 @@ Contraseña: ${data.credenciales?.password || "N/A"}
 
               <div className="form-group">
                 <label>Nombre Completo</label>
-                <input type="text" id="nombre" value={form.nombre} onChange={handleChange} required />
+                <input type="text" name="nombre" value={form.nombre} onChange={handleChange} required />
               </div>
 
               <div className="form-group">
                 <label>Cédula</label>
-                <input type="text" id="cedula" value={form.cedula} onChange={handleChange} required />
+                <input type="text" name="cedula" value={form.cedula} onChange={handleChange} required />
               </div>
 
               <div className="form-group">
                 <label>Correo</label>
-                <input type="email" id="correo" value={form.correo} onChange={handleChange} required />
+                <input type="email" name="correo" value={form.correo} onChange={handleChange} required />
               </div>
 
               <div className="form-group">
                 <label>Cargo (opcional)</label>
-                <input type="text" id="cargo" value={form.cargo} onChange={handleChange} />
+                <input type="text" name="cargo" value={form.cargo} onChange={handleChange} />
               </div>
 
               <div className="form-group">
                 <label>Salario</label>
-                <input type="number" id="salario" value={form.salario} onChange={handleChange} required />
+                <input type="number" name="salario" value={form.salario} onChange={handleChange} required />
               </div>
 
               <div className="form-group">
                 <label>Fecha de Ingreso</label>
-                <input type="date" id="fechaIngreso" value={form.fechaIngreso} onChange={handleChange} required />
+                <input type="date" name="fechaIngreso" value={form.fechaIngreso} onChange={handleChange} required />
               </div>
 
               <div className="form-group">
                 <label>Fecha de Nacimiento</label>
-                <input type="date" id="fechaNacimiento" value={form.fechaNacimiento} onChange={handleChange} required />
+                <input type="date" name="fechaNacimiento" value={form.fechaNacimiento} onChange={handleChange} required />
               </div>
 
               <div className="form-group">
                 <label>Departamento</label>
-                <input type="text" id="departamento" value={form.departamento} onChange={handleChange} required/>
+                <input type="text" name="departamento" value={form.departamento} onChange={handleChange} required/>
               </div>
 
+            </div>
+
+            <hr />
+
+            <h3>Contacto de Emergencia</h3>
+            <div className="form-grid">
+              <div className="form-group">
+                <label>Nombre Completo del Contacto</label>
+                <input type="text" name="contactoEmergencia.nombre" value={form.contactoEmergencia.nombre} onChange={handleChange} required />
+              </div>
+
+              <div className="form-group">
+                <label>Relación con el Empleado</label>
+                <select name="contactoEmergencia.relacion" value={form.contactoEmergencia.relacion} onChange={handleChange} required>
+                  <option value="">Seleccionar</option>
+                  <option value="padre">Padre</option>
+                  <option value="madre">Madre</option>
+                  <option value="pareja">Pareja</option>
+                  <option value="amigo">Amigo</option>
+                  <option value="hermano">Hermano</option>
+                  <option value="otro">Otro</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label>Número de Teléfono Principal</label>
+                <input type="tel" name="contactoEmergencia.telefonoPrincipal" value={form.contactoEmergencia.telefonoPrincipal} onChange={handleChange} required />
+              </div>
+
+              <div className="form-group">
+                <label>Número de Teléfono Alternativo (opcional)</label>
+                <input type="tel" name="contactoEmergencia.telefonoAlternativo" value={form.contactoEmergencia.telefonoAlternativo} onChange={handleChange} />
+              </div>
+
+              <div className="form-group">
+                <label>Dirección de Residencia (opcional)</label>
+                <input type="text" name="contactoEmergencia.direccion" value={form.contactoEmergencia.direccion} onChange={handleChange} />
+              </div>
+
+              <div className="form-group">
+                <label>Ciudad o Ubicación (opcional)</label>
+                <input type="text" name="contactoEmergencia.ciudad" value={form.contactoEmergencia.ciudad} onChange={handleChange} />
+              </div>
             </div>
 
             <div className="form-group">

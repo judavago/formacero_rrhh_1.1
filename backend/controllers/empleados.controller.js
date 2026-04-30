@@ -72,7 +72,8 @@ export const createEmpleado = async (req, res) => {
       departamento,
       fechaNacimiento,
       telefono,
-      direccion
+      direccion,
+      contactoEmergencia
     } = req.body;
 
     if (!nombre || !cedula || !correo) {
@@ -120,6 +121,14 @@ export const createEmpleado = async (req, res) => {
       ? await findOrCreateDepartamentoId(departamento)
       : null;
 
+    const isUsingServiceRole = Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY);
+
+    if (!isUsingServiceRole && contactoEmergencia && contactoEmergencia.nombre) {
+      return res.status(500).json({
+        message: "No hay SUPABASE_SERVICE_ROLE_KEY configurada. Sin ella, la tabla contactos_emergencia bloquea la inserción por RLS."
+      });
+    }
+
     const empleadoPayload = {
       nombre,
       documento: cedulaNormalizada,
@@ -147,6 +156,38 @@ export const createEmpleado = async (req, res) => {
     }
 
     const empleadoId = empleadoData[0].id;
+
+    // 3️⃣ Crear contacto de emergencia si se proporciona
+    if (contactoEmergencia && contactoEmergencia.nombre) {
+      const contactoPayload = {
+        empleado_id: empleadoId,
+        nombre: contactoEmergencia.nombre,
+        relacion: contactoEmergencia.relacion,
+        telefono_principal: contactoEmergencia.telefonoPrincipal,
+        telefono_alternativo: contactoEmergencia.telefonoAlternativo || null,
+        direccion: contactoEmergencia.direccion || null,
+        ciudad: contactoEmergencia.ciudad || null,
+        autorizacion: false
+      };
+
+      const { error: contactoError } = await supabase
+        .from("contactos_emergencia")
+        .insert([contactoPayload]);
+
+      if (contactoError) {
+        // Si falla, eliminar el empleado y usuario creados
+        await supabase.from("empleados").delete().eq("id", empleadoId);
+        await supabase.from("usuarios").delete().eq("empleado_id", empleadoId);
+
+        if (contactoError.code === "42501") {
+          return res.status(500).json({
+            message: "Error RLS: revise la clave SUPABASE_SERVICE_ROLE_KEY o las políticas de seguridad de la tabla contactos_emergencia."
+          });
+        }
+
+        throw contactoError;
+      }
+    }
 
     // 2️⃣ Crear usuario
     const defaultPassword = cedulaNormalizada;
@@ -274,6 +315,16 @@ export const deleteEmpleado = async (req, res) => {
       throw userDeleteError;
     }
 
+    // 3.5️⃣ Eliminar contactos de emergencia asociados
+    const { error: contactosDeleteError } = await supabase
+      .from("contactos_emergencia")
+      .delete()
+      .eq("empleado_id", id);
+
+    if (contactosDeleteError && contactosDeleteError.code !== "PGRST205") {
+      throw contactosDeleteError;
+    }
+
     // 4️⃣ Eliminar de empleados
     const { error: deleteError } = await supabase
       .from("empleados")
@@ -392,7 +443,7 @@ export const getEmpleadoById = async (req, res) => {
 
     const { data, error } = await supabase
       .from("empleados")
-      .select("*, departamentos(nombre)")
+      .select("*, departamentos(nombre), contactos_emergencia(*)")
       .eq("id", id)
       .single();
 

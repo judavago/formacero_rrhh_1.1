@@ -309,6 +309,25 @@ select:focus {
 
 
 /* =========================
+   LÍNEA DIVISORIA
+========================= */
+
+hr {
+
+    border: none;
+
+    height: 4px;
+
+    background-color: var(--border);
+
+    margin: 30px 0;
+
+    border-radius: 2px;
+
+}
+
+
+/* =========================
    RESPONSIVE
 ========================= */
 

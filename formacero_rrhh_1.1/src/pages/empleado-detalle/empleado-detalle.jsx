@@ -11,6 +11,7 @@ function EmpleadoDetalle() {
   const [searchParams] = useSearchParams();
   const [empleado, setEmpleado] = useState(null);
   const [activeSection, setActiveSection] = useState("info");
+  const [showContactoEmergencia, setShowContactoEmergencia] = useState(false);
   const [reportes, setReportes] = useState([]);
   const [loadingReportes, setLoadingReportes] = useState(false);
   const [respondingTo, setRespondingTo] = useState(null);
@@ -213,6 +214,42 @@ function EmpleadoDetalle() {
                 </span>
               </p>
 
+            </div>
+
+            <div className="contacto-card">
+              <div className="contacto-header">
+                <div>
+                  <h3>Contacto de Emergencia</h3>
+                  <p className="subtitulo">Información confidencial y disponible en caso de emergencia</p>
+                </div>
+                <button
+                  type="button"
+                  className="toggle-contacto-btn"
+                  onClick={() => setShowContactoEmergencia(!showContactoEmergencia)}
+                >
+                  {showContactoEmergencia ? "Ocultar" : "Mostrar"}
+                </button>
+              </div>
+
+              {showContactoEmergencia && (
+                <div className="contacto-details">
+                  {empleado.contactos_emergencia && empleado.contactos_emergencia.length > 0 ? (
+                    empleado.contactos_emergencia.map((contacto) => (
+                      <div key={contacto.id}>
+                        <p><strong>Nombre:</strong> {contacto.nombre}</p>
+                        <p><strong>Relación:</strong> {contacto.relacion}</p>
+                        <p><strong>Teléfono principal:</strong> {contacto.telefono_principal}</p>
+                        <p><strong>Teléfono alternativo:</strong> {contacto.telefono_alternativo || "-"}</p>
+                        <p><strong>Dirección:</strong> {contacto.direccion || "-"}</p>
+                        <p><strong>Ciudad:</strong> {contacto.ciudad || "-"}</p>
+                        <p><strong>Autorización:</strong> {contacto.autorizacion ? "Sí" : "No"}</p>
+                      </div>
+                    ))
+                  ) : (
+                    <p>No se encontró información de contacto de emergencia.</p>
+                  )}
+                </div>
+              )}
             </div>
 
           </div>
