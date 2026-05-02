@@ -82,6 +82,14 @@ h2 {
     margin-top:40px;
 }
 
+h3 {
+    color:var(--primary);
+    margin: 24px 0 16px;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
 
 /* =========================
    GRID FORMULARIO

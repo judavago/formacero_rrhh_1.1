@@ -94,6 +94,21 @@ border-bottom:1px solid #eee;
 
 }
 
+.name {
+  font-weight: 600;
+}
+
+.employee-link {
+  color: var(--color-primario);
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.employee-link:hover {
+  color: var(--color-secundario);
+}
+
 
 /* DOCUMENTOS */
 

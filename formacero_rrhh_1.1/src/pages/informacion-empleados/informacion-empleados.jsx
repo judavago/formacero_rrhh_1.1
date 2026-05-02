@@ -233,7 +233,11 @@ function InformacionEmpleados() {
               filteredEmployees.map((emp, index) => (
                 <React.Fragment key={emp.id}>
                   <tr className="employee-row">
-                    <td className="name">{emp.nombre}</td>
+                    <td className="name">
+                      <Link to={`/empleado/${emp.id}`} className="employee-link">
+                        {emp.nombre}
+                      </Link>
+                    </td>
                     <td className="position">{emp.cargo}</td>
 
                     <td className="department">

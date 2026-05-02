@@ -234,16 +234,17 @@ export const createEmpleado = async (req, res) => {
 export const updateEmpleado = async (req, res) => {
   try {
     const { id } = req.params;
-    const { nombre, departamento } = req.body;
+    const { nombre, departamento, telefono, direccion } = req.body;
 
     const departamentoId = departamento
       ? await findOrCreateDepartamentoId(departamento)
       : null;
 
-    const updateData = {
-      nombre
-    };
+    const updateData = {};
 
+    if (nombre) updateData.nombre = nombre;
+    if (telefono) updateData.telefono = telefono;
+    if (direccion) updateData.direccion = direccion;
     if (departamentoId !== null) {
       updateData.departamento_id = departamentoId;
     }
